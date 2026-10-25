@@ -1,0 +1,92 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../../app/**/*.php';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme inline {
+    --font-sans: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-destructive: var(--destructive);
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+    --radius-sm: calc(var(--radius) * 0.6);
+    --radius-md: calc(var(--radius) * 0.8);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) * 1.4);
+    --radius-2xl: calc(var(--radius) * 1.8);
+}
+
+:root {
+    --radius: 0.625rem;
+    --background: #eceff3;
+    --foreground: oklch(0.145 0 0);
+    --card: #ffffff;
+    --card-foreground: #1d2939;
+    --popover: #ffffff;
+    --popover-foreground: #1d2939;
+    --primary: #465fff;
+    --primary-foreground: #ffffff;
+    --secondary: #f2f4f7;
+    --secondary-foreground: #344054;
+    --muted: #f2f4f7;
+    --muted-foreground: #667085;
+    --accent: #ecf3ff;
+    --accent-foreground: #465fff;
+    --destructive: #f04438;
+    --border: #e4e7ec;
+    --input: #e4e7ec;
+    --ring: #465fff;
+}
+
+.dark {
+    --background: #101828;
+    --foreground: #e4e7ec;
+    --card: #1d2939;
+    --card-foreground: #e4e7ec;
+    --popover: #1d2939;
+    --popover-foreground: #e4e7ec;
+    --secondary: #1d2939;
+    --secondary-foreground: #e4e7ec;
+    --muted: #1d2939;
+    --muted-foreground: #98a2b3;
+    --accent: #233047;
+    --accent-foreground: #ffffff;
+    --destructive: #f97066;
+    --border: #344054;
+    --input: #344054;
+}
+
+@layer base {
+    * {
+        @apply border-border outline-ring/50;
+    }
+
+    html {
+        @apply font-sans;
+    }
+
+    body {
+        @apply bg-background text-foreground antialiased;
+    }
+
+    [x-cloak] {
+        display: none !important;
+    }
+}
