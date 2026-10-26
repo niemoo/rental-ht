@@ -6,14 +6,13 @@
     :label="'unit '.$unit['code']"
     :edit-href="$canEdit ? route('units.edit', $unit['id']) : null"
     :delete-action="$canDelete ? 'delete('.$unit['id'].')' : null"
-    delete-title="Hapus unit"
     delete-button="Hapus unit"
     :delete-blocked="$isBooked"
     {{ $attributes }}
 >
     @if ($isBooked)
-        Unit <strong class="text-foreground">{{ $unit['code'] }}</strong> masih disewa atau sudah dipesan, jadi belum bisa dihapus. Selesaikan penyewaannya dulu.
+        Unit <strong class="text-body">{{ $unit['code'] }}</strong> masih disewa atau sudah dipesan, jadi belum bisa dihapus. Selesaikan penyewaannya dulu.
     @else
-        Hapus unit <strong class="text-foreground">{{ $unit['code'] }}</strong>? Riwayat penyewaan unit ini tetap tersimpan.
+        Hapus unit <strong class="text-body">{{ $unit['code'] }}</strong>? Riwayat penyewaan unit ini tetap tersimpan.
     @endif
 </x-row-actions>

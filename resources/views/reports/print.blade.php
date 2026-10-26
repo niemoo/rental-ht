@@ -16,6 +16,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>{{ $report->title() }} · {{ $report->subtitle() }}</title>
         @fonts
+        @include('partials.velzon-styles')
         @vite(['resources/css/app.css'])
         <style>
             @page { size: A4 landscape; margin: 12mm; }

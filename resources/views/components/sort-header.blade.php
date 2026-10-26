@@ -4,21 +4,14 @@
 @php($isActive = $sortBy === $column)
 <th
     @if ($isActive) aria-sort="{{ $sortDirection === 'desc' ? 'descending' : 'ascending' }}" @endif
-    {{ $attributes->class(['h-10 px-2 text-left align-middle font-medium whitespace-nowrap first:pl-4']) }}
+    {{ $attributes->class(['text-nowrap']) }}
 >
-    <button
-        type="button"
-        wire:click="sort('{{ $column }}')"
-        @class([
-            '-mx-1 inline-flex items-center gap-1 rounded px-1 py-0.5 transition-colors hover:bg-muted hover:text-foreground',
-            'text-foreground' => $isActive,
-        ])
-    >
+    <button type="button" wire:click="sort('{{ $column }}')" @class(['sort-button', 'is-active' => $isActive])>
         {{ $slot }}
         @if ($isActive)
-            <x-icon :name="$sortDirection === 'desc' ? 'arrow-down' : 'arrow-up'" class="size-3.5" />
+            <x-icon :name="$sortDirection === 'desc' ? 'arrow-down' : 'arrow-up'" class="text-primary" />
         @else
-            <x-icon name="chevrons-up-down" class="size-3.5 text-muted-foreground/60" />
+            <x-icon name="chevrons-up-down" class="opacity-50" />
         @endif
     </button>
 </th>

@@ -15,8 +15,9 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Invoice {{ $rental->invoice_number }} · {{ config('app.name') }}</title>
+        <title>Invoice {{ $rental->invoice_number }} · {{ config('invoice.business.name') }}</title>
         @fonts
+        @include('partials.velzon-styles')
         @vite(['resources/css/app.css'])
         <style>
             @page { size: A4; margin: 0; }

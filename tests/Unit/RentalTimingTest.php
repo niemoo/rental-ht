@@ -17,9 +17,9 @@ test('classifies a rental relative to today', function (string $start, string $d
     'starts in 3 days' => ['2026-10-17 00:00', '2026-10-18 23:59', RentalStatus::Upcoming, 'mulai 3 hari lagi', 'Mendatang'],
     'overdue by 1 day' => ['2026-10-10 00:00', '2026-10-13 23:59', RentalStatus::Overdue, '1 hari lalu', 'Terlambat 1h'],
     'overdue by 4 days' => ['2026-10-01 00:00', '2026-10-10 23:59', RentalStatus::Overdue, '4 hari lalu', 'Terlambat 4h'],
-    'due today' => ['2026-10-12 00:00', '2026-10-14 23:59', RentalStatus::Soon, 'jatuh tempo hari ini', 'Segera'],
-    'due tomorrow' => ['2026-10-14 00:00', '2026-10-15 23:59', RentalStatus::Soon, 'jatuh tempo besok', 'Segera'],
-    'due in 5 days' => ['2026-10-13 00:00', '2026-10-19 23:59', RentalStatus::OnTime, 'jatuh tempo 5 hari lagi', 'Berjalan'],
+    'due today' => ['2026-10-12 00:00', '2026-10-14 23:59', RentalStatus::Soon, 'selesai hari ini', 'Segera'],
+    'due tomorrow' => ['2026-10-14 00:00', '2026-10-15 23:59', RentalStatus::Soon, 'selesai besok', 'Segera'],
+    'due in 5 days' => ['2026-10-13 00:00', '2026-10-19 23:59', RentalStatus::OnTime, 'selesai 5 hari lagi', 'Berjalan'],
 ]);
 
 test('a completed rental is late only when its last unit came back after the due day', function (?string $lastReturnedAt, RentalStatus $status, string $pill) {

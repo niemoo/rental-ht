@@ -194,9 +194,9 @@ test('an unknown return condition is rejected and nothing is returned', function
 });
 
 test('the return dialog lists each unit with a condition picker', function () {
-    Rental::factory()->withUnits(Unit::factory()->create(['code' => 'A-07']))->create();
+    $rental = Rental::factory()->withUnits(Unit::factory()->create(['code' => 'A-07']))->create();
 
-    $this->get(route('dashboard'))
+    $this->get(route('rentals.show', $rental))
         ->assertOk()
         ->assertSee('Kondisi A-07')
         ->assertSee('Dalam perbaikan');

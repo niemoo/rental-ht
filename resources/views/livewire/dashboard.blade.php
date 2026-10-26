@@ -1,30 +1,41 @@
-<div class="flex flex-col gap-5">
-    <x-page-header title="Dasbor" :subtitle="now()->translatedFormat('l, j F')">
+<div class="vstack gap-4">
+    <x-page-header title="Dashboard" :subtitle="now()->translatedFormat('l, j F Y')">
         <x-slot:action>
             @can(\App\Enums\Permission::CreateRentals)
-                <x-button :href="route('rentals.create')"><x-icon name="plus" />Penyewaan baru</x-button>
+                <x-button variant="success" :href="route('rentals.create')"><x-icon name="plus" />Penyewaan baru</x-button>
             @endcan
         </x-slot:action>
     </x-page-header>
 
     {{-- Metric tiles --}}
-    <div class="grid grid-cols-2 gap-4 lg:grid-cols-4 lg:gap-5">
-        <x-stat-tile label="Total unit" :value="$fleet['total']" sub="di armada" icon="package" />
-        <x-stat-tile label="Unit disewa" :value="$fleet['out_now']" :sub="'dari '.$fleet['total'].' unit'" icon="radio-tower" />
-        <x-stat-tile label="Penyewaan bulan ini" :value="$monthStat['count']" :trend="$monthStat['change_pct']" icon="calendar-days" />
-        <x-stat-tile label="Terlambat" :value="$overdueCount" sub="perlu ditindaklanjuti" icon="triangle-alert" />
+    <div class="row g-3">
+        <div class="col-xl-3 col-sm-6">
+            <x-stat-tile label="Total unit" :value="$fleet['total']" sub="di armada" icon="package" tone="primary" />
+        </div>
+        <div class="col-xl-3 col-sm-6">
+            <x-stat-tile label="Unit disewa" :value="$fleet['out_now']" :sub="'dari '.Number::format($fleet['total']).' unit'" icon="radio-tower" tone="info" />
+        </div>
+        <div class="col-xl-3 col-sm-6">
+            <x-stat-tile label="Penyewaan bulan ini" :value="$monthStat['count']" :trend="$monthStat['change_pct']" sub="dibanding bulan lalu" icon="calendar-days" tone="success" />
+        </div>
+        <div class="col-xl-3 col-sm-6">
+            <x-stat-tile label="Terlambat" :value="$overdueCount" sub="perlu ditindaklanjuti" icon="triangle-alert" :tone="$overdueCount > 0 ? 'danger' : 'success'" />
+        </div>
     </div>
 
     {{-- Bar + gauge --}}
-    <div class="grid grid-cols-1 gap-5 lg:grid-cols-3">
-        <div class="min-w-0 lg:col-span-2">
-            <x-chart-card title="Penyewaan per bulan">
+    <div class="row g-3">
+        <div class="col-xl-8">
+            <x-chart-card title="Penyewaan per bulan" subtitle="12 bulan terakhir">
                 <x-chart type="rentalsPerMonth" :data="$perMonth" />
             </x-chart-card>
         </div>
-        <x-chart-card title="Pemakaian armada" subtitle="Porsi armada yang sedang disewa">
-            <x-chart type="utilization" :data="['percent' => $utilization]" :height="300" />
-        </x-chart-card>
+        <div class="col-xl-4">
+            <x-chart-card title="Pemakaian armada" subtitle="Porsi armada yang sedang disewa">
+                <x-chart type="utilization" :data="['percent' => $utilization]" :height="300" />
+                <p class="text-center text-muted mb-0 tabular-nums">{{ Number::format($fleet['out_now']) }} dari {{ Number::format($fleet['total']) }} unit sedang di luar</p>
+            </x-chart-card>
+        </div>
     </div>
 
     {{-- Area --}}
@@ -33,16 +44,13 @@
     </x-chart-card>
 
     {{-- Donut + out now --}}
-    <div class="grid grid-cols-1 gap-5 lg:grid-cols-12">
-        <div class="min-w-0 lg:col-span-5">
-            <x-chart-card title="Status armada" :subtitle="$fleet['total'].' unit saat ini'">
+    <div class="row g-3">
+        <div class="col-xl-5">
+            <x-chart-card title="Status armada" :subtitle="Number::format($fleet['total']).' unit saat ini'">
                 <x-chart type="fleetStatus" :data="['available' => $fleet['available'], 'onRent' => $fleet['on_rent'], 'overdue' => $fleet['overdue'], 'outOfService' => $fleet['out_of_service']]" :height="300" />
             </x-chart-card>
         </div>
-        <div class="min-w-0 lg:col-span-7">
-            <h2 class="mb-3 px-0.5 text-base font-semibold text-foreground">
-                Sedang disewa <span class="text-sm font-medium tabular-nums text-muted-foreground">· {{ $outNow->total() }} aktif</span>
-            </h2>
+        <div class="col-xl-7">
             <x-rentals.out-now :rentals="$outNow" :sort-by="$sortBy" :sort-direction="$sortDirection" />
         </div>
     </div>

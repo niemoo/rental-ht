@@ -12,7 +12,7 @@ use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
-#[Title('Dasbor')]
+#[Title('Dashboard')]
 class Dashboard extends Component
 {
     use ReturnsRentals, SortsTable;
@@ -36,11 +36,6 @@ class Dashboard extends Component
             'customer' => 'customer_name',
             'units' => 'open_items_count',
         ];
-    }
-
-    protected function perPage(): int
-    {
-        return 10;
     }
 
     public function render(): View

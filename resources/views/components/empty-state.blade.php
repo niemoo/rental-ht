@@ -1,1 +1,1 @@
-<div class="py-10 text-center text-sm text-muted-foreground">{{ $slot }}</div>
+<div class="py-5 text-center text-muted fs-13">{{ $slot }}</div>

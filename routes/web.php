@@ -10,6 +10,7 @@ use App\Livewire\Charges;
 use App\Livewire\Customers;
 use App\Livewire\Dashboard;
 use App\Livewire\Payments;
+use App\Livewire\Profile;
 use App\Livewire\Rentals;
 use App\Livewire\Reports;
 use App\Livewire\Roles;
@@ -27,6 +28,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout', LogoutController::class)->name('logout');
 
     Route::livewire('/dashboard', Dashboard::class)->name('dashboard');
+    Route::livewire('/profile', Profile::class)->name('profile');
     Route::livewire('/units', Units\Index::class)->name('units.index')->can(Permission::ViewUnits);
     Route::livewire('/units/new', Units\Form::class)->name('units.create')->can(Permission::CreateUnits);
     Route::livewire('/units/{unit}/edit', Units\Form::class)->name('units.edit')->can(Permission::EditUnits);

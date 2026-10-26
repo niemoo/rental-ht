@@ -6,17 +6,26 @@
  * Charts re-render when the theme toggles so axis/grid colours follow light/dark mode.
  */
 
-const FONT = "'Outfit', sans-serif";
+const FONT = "'Poppins', sans-serif";
 
+/** Reads Velzon's CSS variables, so chart colours follow the template and its light/dark switch. */
 function palette() {
-    const dark = document.documentElement.classList.contains('dark');
+    const styles = getComputedStyle(document.documentElement);
+    const css = (name, fallback) => styles.getPropertyValue(name).trim() || fallback;
+    const dark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
 
     return {
         mode: dark ? 'dark' : 'light',
-        axis: dark ? '#667085' : '#98a2b3',
-        grid: dark ? '#1f2a3c' : '#f2f4f7',
-        track: dark ? '#344054' : '#e4e7ec',
-        strong: dark ? '#e4e7ec' : '#101828',
+        axis: css('--vz-secondary-color', '#878a99'),
+        grid: css('--vz-border-color', '#e9ebec'),
+        track: css('--vz-tertiary-bg', '#eff2f7'),
+        strong: css('--vz-emphasis-color', '#212529'),
+        primary: css('--vz-primary', '#405189'),
+        primarySoft: css('--vz-info', '#299cdb'),
+        success: css('--vz-success', '#0ab39c'),
+        warning: css('--vz-warning', '#f7b84b'),
+        danger: css('--vz-danger', '#f06548'),
+        muted: css('--vz-secondary-color', '#878a99'),
     };
 }
 
@@ -38,7 +47,7 @@ const builders = {
         chart: { type: 'bar', height: 320, fontFamily: FONT, toolbar: { show: false }, background: 'transparent' },
         theme: { mode: t.mode },
         series: [{ name: 'Penyewaan', data }],
-        colors: ['#465fff'],
+        colors: [t.primary],
         plotOptions: { bar: { borderRadius: 5, columnWidth: '48%' } },
         dataLabels: { enabled: false },
         xaxis: { categories, axisBorder: { show: false }, axisTicks: { show: false }, labels: axisLabels(t) },
@@ -51,7 +60,7 @@ const builders = {
         chart: { type: 'bar', height: 320, stacked: true, fontFamily: FONT, toolbar: { show: false }, background: 'transparent' },
         theme: { mode: t.mode },
         series,
-        colors: ['#12b76a', '#465fff', '#f79009'],
+        colors: [t.success, t.primary, t.warning],
         plotOptions: { bar: { borderRadius: 3, columnWidth: categories.length > 20 ? '70%' : '48%' } },
         dataLabels: { enabled: false },
         xaxis: { categories, axisBorder: { show: false }, axisTicks: { show: false }, labels: { ...axisLabels(t), hideOverlappingLabels: true, rotate: 0 }, tickAmount: Math.min(categories.length, 12) },
@@ -68,7 +77,7 @@ const builders = {
             { name: 'Pemesanan', type: 'column', data: rentals },
             { name: 'Omzet', type: 'line', data: omzet },
         ],
-        colors: ['#9cb9ff', '#465fff'],
+        colors: [t.primarySoft, t.primary],
         stroke: { width: [0, 3], curve: 'smooth' },
         plotOptions: { bar: { borderRadius: 3, columnWidth: categories.length > 20 ? '70%' : '48%' } },
         dataLabels: { enabled: false },
@@ -89,7 +98,7 @@ const builders = {
             { name: 'Unit keluar', data: out },
             { name: 'Unit kembali', data: returned },
         ],
-        colors: ['#465fff', '#9cb9ff'],
+        colors: [t.primary, t.success],
         dataLabels: { enabled: false },
         stroke: { curve: 'smooth', width: 2 },
         fill: { type: 'gradient', gradient: { opacityFrom: 0.35, opacityTo: 0, stops: [0, 95] } },
@@ -104,7 +113,7 @@ const builders = {
         chart: { type: 'radialBar', height: 300, fontFamily: FONT, sparkline: { enabled: true }, background: 'transparent' },
         theme: { mode: t.mode },
         series: [percent],
-        colors: ['#465fff'],
+        colors: [t.primary],
         plotOptions: {
             radialBar: {
                 startAngle: -110,
@@ -126,7 +135,7 @@ const builders = {
         theme: { mode: t.mode },
         series: [available, onRent, overdue, outOfService],
         labels: ['Tersedia', 'Disewa', 'Terlambat', 'Tidak bisa dipakai'],
-        colors: ['#12b76a', '#465fff', '#f04438', '#98a2b3'],
+        colors: [t.success, t.primary, t.danger, t.muted],
         stroke: { width: 0 },
         dataLabels: { enabled: false },
         legend: { position: 'bottom', fontFamily: FONT, labels: { colors: t.axis } },

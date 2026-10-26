@@ -1,13 +1,23 @@
-@import 'tailwindcss';
+/*
+ * The look comes from the Velzon template (public/velzon, linked in partials/head before this file).
+ * Tailwind stays for views that still use its utilities: no preflight (Bootstrap's reboot is the base),
+ * utilities unlayered so they sit beside Velzon's CSS, and the app's colour tokens point at Velzon's
+ * variables so both follow the same palette and data-bs-theme switch.
+ */
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 @source '../../app/**/*.php';
 
-@custom-variant dark (&:where(.dark, .dark *));
+/* Velzon/Bootstrap class names that Tailwind would otherwise turn into conflicting utilities. */
+@source not inline('{collapse,container,invisible,visible,w-xs,w-sm,w-md,w-lg,w-xl}');
+
+@custom-variant dark (&:where([data-bs-theme=dark], [data-bs-theme=dark] *));
 
 @theme inline {
-    --font-sans: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+    --font-sans: 'Poppins', ui-sans-serif, system-ui, sans-serif;
     --color-background: var(--background);
     --color-foreground: var(--foreground);
     --color-card: var(--card);
@@ -34,59 +44,176 @@
 }
 
 :root {
-    --radius: 0.625rem;
-    --background: #eceff3;
-    --foreground: oklch(0.145 0 0);
-    --card: #ffffff;
-    --card-foreground: #1d2939;
-    --popover: #ffffff;
-    --popover-foreground: #1d2939;
-    --primary: #465fff;
+    --radius: 0.25rem;
+    --background: var(--vz-body-bg);
+    --foreground: var(--vz-body-color);
+    --card: var(--vz-secondary-bg);
+    --card-foreground: var(--vz-body-color);
+    --popover: var(--vz-secondary-bg);
+    --popover-foreground: var(--vz-body-color);
+    --primary: var(--vz-primary);
     --primary-foreground: #ffffff;
-    --secondary: #f2f4f7;
-    --secondary-foreground: #344054;
-    --muted: #f2f4f7;
-    --muted-foreground: #667085;
-    --accent: #ecf3ff;
-    --accent-foreground: #465fff;
-    --destructive: #f04438;
-    --border: #e4e7ec;
-    --input: #e4e7ec;
-    --ring: #465fff;
+    --secondary: var(--vz-tertiary-bg);
+    --secondary-foreground: var(--vz-body-color);
+    --muted: var(--vz-tertiary-bg);
+    --muted-foreground: var(--vz-secondary-color);
+    --accent: var(--vz-primary-bg-subtle);
+    --accent-foreground: var(--vz-primary);
+    --destructive: var(--vz-danger);
+    --border: var(--vz-border-color);
+    --input: var(--vz-border-color);
+    --ring: var(--vz-primary);
 }
 
-.dark {
-    --background: #101828;
-    --foreground: #e4e7ec;
-    --card: #1d2939;
-    --card-foreground: #e4e7ec;
-    --popover: #1d2939;
-    --popover-foreground: #e4e7ec;
-    --secondary: #1d2939;
-    --secondary-foreground: #e4e7ec;
-    --muted: #1d2939;
-    --muted-foreground: #98a2b3;
-    --accent: #233047;
-    --accent-foreground: #ffffff;
-    --destructive: #f97066;
-    --border: #344054;
-    --input: #344054;
+/*
+ * The copied Velzon build sets --vz-primary to near-black while --vz-primary-rgb is Velzon's indigo, so
+ * buttons and charts that read the hex value vanish on dark cards. Restore the indigo, lighter in dark mode.
+ */
+:root,
+[data-bs-theme='light'] {
+    --vz-primary: #405189;
+    --vz-primary-rgb: 64, 81, 137;
+    /* Hover/focus colour of primary buttons; the copied build derives it from its near-black primary too. */
+    --vz-primary-text-emphasis: #364574;
 }
 
-@layer base {
-    * {
-        @apply border-border outline-ring/50;
-    }
+[data-bs-theme='dark'] {
+    --vz-primary: #6c7fc4;
+    --vz-primary-rgb: 108, 127, 196;
+    --vz-primary-text-emphasis: #8f9fd6;
+    --vz-primary-bg-subtle: rgba(108, 127, 196, 0.18);
+    /* Velzon's dark topbar border equals the topbar colour, so the line under it disappears. */
+    --vz-header-border: var(--vz-border-color);
+}
 
-    html {
-        @apply font-sans;
-    }
+/* Components where the same build hard-codes that near-black as their "active" colour. */
+.pagination {
+    --vz-pagination-active-bg: var(--vz-primary);
+    --vz-pagination-active-border-color: var(--vz-primary);
+}
 
-    body {
-        @apply bg-background text-foreground antialiased;
-    }
+.nav-pills {
+    --vz-nav-pills-link-active-bg: var(--vz-primary);
+}
 
-    [x-cloak] {
-        display: none !important;
-    }
+.list-group {
+    --vz-list-group-active-bg: var(--vz-primary);
+    --vz-list-group-active-border-color: var(--vz-primary);
+}
+
+.btn-outline-primary {
+    --vz-btn-active-bg: var(--vz-primary);
+    --vz-btn-active-border-color: var(--vz-primary);
+}
+
+[x-cloak] {
+    display: none !important;
+}
+
+/* Velzon paints every pie/donut text white (meant for slice labels), which hides the donut's centre total on light cards. */
+.apexcharts-pie .apexcharts-datalabel-label {
+    fill: var(--vz-secondary-color);
+}
+
+.apexcharts-pie .apexcharts-datalabel-value {
+    fill: var(--vz-emphasis-color);
+}
+
+/*
+ * Velzon hides a closed Choices list with visibility only, so it still adds to the page's scroll height. Under a
+ * select near the bottom (the rows-per-page picker) that pushes the scroll past Velzon's bottom-pinned footer.
+ */
+.choices__list--dropdown:not(.is-active) {
+    display: none;
+}
+
+/* SweetAlert2 dialogs: a full-strength question, then grey explanation text at the size Velzon's own confirmation modal uses (fs-15). */
+.swal2-popup .swal2-title {
+    color: var(--vz-emphasis-color);
+}
+
+.swal2-popup .swal2-html-container {
+    font-size: 0.9375rem;
+    color: var(--vz-secondary-color);
+}
+
+/* Compact Choices select (<x-select size="sm">) for toolbars and table footers, about form-select-sm high. */
+.choices-sm .choices {
+    margin-bottom: 0;
+}
+
+.choices-sm .choices__inner {
+    min-height: 30px;
+    padding: 0.125rem 2rem 0.125rem 0.5rem;
+}
+
+.choices-sm .choices[data-type*='select-one'] .choices__inner {
+    padding-bottom: 0.125rem;
+}
+
+.choices-sm .choices__list--single {
+    padding: 0.25rem 0.25rem 0.25rem 0;
+}
+
+.choices-sm .choices[data-type*='select-one']::after {
+    right: 0.5rem;
+}
+
+/* Velzon's page title bar uses the card colour, which in dark mode differs from the topbar; match the topbar in both themes. */
+.page-title-box {
+    background-color: var(--vz-header-bg);
+}
+
+/* Room between the last card and the footer. */
+.page-content {
+    padding-bottom: calc(60px + 2rem);
+}
+
+/* Additions on top of Velzon for things the template has no class for. */
+.tabular-nums {
+    font-variant-numeric: tabular-nums;
+}
+
+.unit-chip {
+    font-family: var(--vz-font-monospace);
+    font-weight: 500;
+    font-size: 0.72rem;
+    color: var(--vz-body-color);
+    background-color: var(--vz-light);
+    border: 1px solid var(--vz-border-color);
+}
+
+.row-overdue > td:first-child,
+.list-overdue {
+    box-shadow: inset 3px 0 0 var(--vz-danger);
+}
+
+.sort-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font-weight: inherit;
+}
+
+.sort-button:hover,
+.sort-button.is-active {
+    color: var(--vz-body-color);
+}
+
+.brand-mark {
+    font-size: 1.05rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+}
+
+.app-menu .brand-mark {
+    color: #ffffff;
+}
+
+#page-topbar {
+    padding-top: env(safe-area-inset-top, 0px);
 }

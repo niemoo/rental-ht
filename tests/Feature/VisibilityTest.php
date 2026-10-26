@@ -81,7 +81,7 @@ function gatedBy(Permission $permission, Rental $rental): array
             'forbidden' => [['rentals.edit', [$rental]]],
         ],
         Permission::ReturnRentals => [
-            'visible' => [['dashboard', [], 'Kembalikan'], ['rentals.show', [$rental], 'Kembalikan']],
+            'visible' => [['rentals.show', [$rental], 'Kembalikan']],
             'forbidden' => [],
         ],
         Permission::CancelRentals => (function () use ($link): array {
