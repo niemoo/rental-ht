@@ -5,53 +5,51 @@
     is given — the Piutang report has none) and the print / CSV / Excel buttons for what is on screen.
     $periodQuery: ReportPeriod::query(); $filterQuery: the report's own filters as URL values.
 --}}
-@php($exportQuery = [...$periodQuery, ...$filterQuery])
-<div class="flex flex-col gap-4">
-    <x-page-header title="Laporan" :subtitle="$report->title().' · '.$report->subtitle()">
-        <x-slot:action>
-            <div class="flex flex-wrap gap-2">
-                <x-button variant="outline" :href="route('reports.print', ['report' => $active, ...$exportQuery])" target="_blank"><x-icon name="printer" /> Cetak</x-button>
-                <x-button variant="outline" :href="route('reports.download', ['report' => $active, 'format' => 'csv', ...$exportQuery])"><x-icon name="download" /> CSV</x-button>
-                <x-button variant="outline" :href="route('reports.download', ['report' => $active, 'format' => 'xlsx', ...$exportQuery])"><x-icon name="download" /> Excel</x-button>
-            </div>
-        </x-slot:action>
-    </x-page-header>
+@php
+    $exportQuery = [...$periodQuery, ...$filterQuery];
+@endphp
+<x-page-header title="Laporan" :subtitle="$report->title().' · '.$report->subtitle()">
+    <x-slot:action>
+        <x-button variant="outline" :href="route('reports.print', ['report' => $active, ...$exportQuery])" target="_blank"><x-icon name="printer" />Cetak</x-button>
+        <x-button variant="outline" :href="route('reports.download', ['report' => $active, 'format' => 'csv', ...$exportQuery])"><x-icon name="download" />CSV</x-button>
+        <x-button variant="outline" :href="route('reports.download', ['report' => $active, 'format' => 'xlsx', ...$exportQuery])"><x-icon name="download" />Excel</x-button>
+    </x-slot:action>
+</x-page-header>
 
-    <nav class="flex gap-1 overflow-x-auto border-b border-border" aria-label="Jenis laporan">
-        @foreach (\App\Support\Reports\Reports::NAMES as $slug => $label)
-            <a
-                href="{{ route('reports.'.$slug, $periodQuery) }}"
-                @class([
-                    '-mb-px border-b-2 px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors',
-                    'border-primary text-primary' => $slug === $active,
-                    'border-transparent text-muted-foreground hover:text-foreground' => $slug !== $active,
-                ])
-                @if ($slug === $active) aria-current="page" @endif
-            >{{ $label }}</a>
-        @endforeach
-    </nav>
+<div class="card mb-0">
+    <div class="card-body pb-0">
+        <ul class="nav nav-tabs nav-tabs-custom nav-success flex-nowrap overflow-x-auto mb-0" aria-label="Jenis laporan">
+            @foreach (\App\Support\Reports\Reports::NAMES as $slug => $label)
+                <li class="nav-item">
+                    <a
+                        href="{{ route('reports.'.$slug, $periodQuery) }}"
+                        @class(['nav-link py-3 text-nowrap', 'active' => $slug === $active])
+                        @if ($slug === $active) aria-current="page" @endif
+                    >{{ $label }}</a>
+                </li>
+            @endforeach
+        </ul>
+    </div>
 
     @if ($period !== null)
-        <div class="flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-center">
-            <div class="inline-flex w-fit max-w-full gap-1 overflow-x-auto rounded-lg border border-border bg-card p-1 shadow-xs">
+        <div class="card-body border-top d-flex flex-wrap align-items-center gap-2">
+            <ul class="nav nav-pills nav-custom-light gap-1" aria-label="Periode">
                 @foreach (\App\Support\ReportPeriod::PRESETS as $preset => $label)
-                    <button
-                        type="button"
-                        wire:click="$set('period', '{{ $preset }}')"
-                        wire:key="preset-{{ $preset }}"
-                        @class([
-                            'rounded-md px-3 py-1.5 text-[13px] font-medium whitespace-nowrap transition-colors',
-                            'bg-primary text-primary-foreground' => $period === $preset,
-                            'text-muted-foreground hover:text-foreground' => $period !== $preset,
-                        ])
-                    >{{ $label }}</button>
+                    <li class="nav-item" wire:key="preset-{{ $preset }}">
+                        <button
+                            type="button"
+                            wire:click="$set('period', '{{ $preset }}')"
+                            @class(['nav-link py-1 px-3 fs-13 text-nowrap', 'active' => $period === $preset])
+                            @if ($period === $preset) aria-pressed="true" @endif
+                        >{{ $label }}</button>
+                    </li>
                 @endforeach
-            </div>
+            </ul>
             @if ($period === 'custom')
-                <div class="flex items-center gap-2">
-                    <x-input type="date" wire:model.live="from" aria-label="Dari tanggal" class="w-auto tabular-nums" />
-                    <span class="text-sm text-muted-foreground">s.d.</span>
-                    <x-input type="date" wire:model.live="to" aria-label="Sampai tanggal" class="w-auto tabular-nums" />
+                <div class="d-flex align-items-center gap-2">
+                    <x-input type="date" wire:model.live="from" aria-label="Dari tanggal" class="form-control-sm w-auto tabular-nums" />
+                    <span class="text-muted fs-13">s.d.</span>
+                    <x-input type="date" wire:model.live="to" aria-label="Sampai tanggal" class="form-control-sm w-auto tabular-nums" />
                 </div>
             @endif
         </div>

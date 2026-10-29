@@ -21,7 +21,9 @@ test('the add and edit category pages open', function () {
         ->assertSee('href="'.route('categories.create').'"', false)
         ->assertSee('href="'.route('categories.edit', $category).'"', false);
 
-    $this->get(route('categories.create'))->assertOk()->assertSee('Tambah kategori');
+    $this->get(route('categories.create'))->assertOk()->assertSee('Tambah kategori')
+        ->assertSee('placeholder="25.000"', false)
+        ->assertSee('<input type="hidden" x-ref="field" wire:model="dailyRate">', false);
     $this->get(route('categories.edit', $category))->assertOk()->assertSee('Ubah kategori')->assertSee('Mic');
 });
 

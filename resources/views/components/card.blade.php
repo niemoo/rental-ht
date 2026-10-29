@@ -1,1 +1,1 @@
-<div {{ $attributes->class(['overflow-hidden rounded-2xl border border-border bg-card shadow-xs']) }}>{{ $slot }}</div>
+<div {{ $attributes->class(['card mb-0 overflow-hidden']) }}>{{ $slot }}</div>

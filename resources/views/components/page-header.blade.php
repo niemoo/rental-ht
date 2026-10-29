@@ -1,11 +1,14 @@
 @props(['title', 'subtitle' => null, 'action' => null])
 
-<div class="flex items-end justify-between gap-4">
-    <div>
-        <h1 class="text-xl font-semibold tracking-tight lg:text-2xl">{{ $title }}</h1>
+{{-- Velzon's page title bar, which spans the top of the content area. --}}
+<div class="page-title-box d-flex flex-wrap align-items-center justify-content-between gap-3 mb-0">
+    <div style="min-width: 0">
+        <h4 class="mb-0">{{ $title }}</h4>
         @if ($subtitle)
-            <p class="mt-0.5 text-sm text-muted-foreground">{{ $subtitle }}</p>
+            <p class="text-muted fs-13 mb-0 mt-1">{{ $subtitle }}</p>
         @endif
     </div>
-    {{ $action }}
+    @if ($action)
+        <div class="d-flex flex-wrap align-items-center gap-2">{{ $action }}</div>
+    @endif
 </div>

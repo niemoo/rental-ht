@@ -1,96 +1,95 @@
 @use('App\Enums\Permission')
 @use('App\Enums\Role')
 
-<div class="flex flex-col gap-4">
+<div class="vstack gap-4">
     <x-page-header title="Roles" subtitle="Atur apa saja yang boleh dilakukan setiap role.">
         <x-slot:action>
-            <x-button wire:click="create"><x-icon name="plus" />Buat role</x-button>
+            <x-button variant="success" wire:click="create"><x-icon name="plus" />Buat role</x-button>
         </x-slot:action>
     </x-page-header>
 
-    @if ($notice)
-        <div class="flex items-center justify-between gap-3 rounded-lg border border-border bg-card px-4 py-2.5 text-sm shadow-xs">
-            <span>{{ $notice }}</span>
-            <button type="button" wire:click="$set('notice', null)" class="text-muted-foreground hover:text-foreground" aria-label="Tutup">
-                <x-icon name="x" />
-            </button>
-        </div>
-    @endif
+    <x-notice :message="$notice" />
 
-    <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+    <div class="row g-3">
         @foreach ($this->roles as $role)
             @php
                 $builtIn = Role::tryFrom($role->name);
                 $granted = $role->permissions->pluck('name');
+                $roleLabel = Role::labelFor($role->name);
             @endphp
-            <section wire:key="role-{{ $role->id }}" class="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 shadow-xs">
-                <div class="flex items-start justify-between gap-3">
-                    <div class="min-w-0">
-                        <div class="flex items-center gap-2">
-                            <h2 class="truncate text-base font-semibold">{{ Role::labelFor($role->name) }}</h2>
-                            @if ($builtIn)
-                                <span class="rounded-full bg-muted px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground">Bawaan</span>
-                            @endif
-                        </div>
-                        <p class="text-xs tabular-nums text-muted-foreground">
-                            {{ $role->users_count }} pengguna · {{ $builtIn?->hasLockedPermissions() ? 'semua izin' : $granted->count().' dari '.count(Permission::cases()).' izin' }}
-                        </p>
-                    </div>
-                    <div class="flex flex-none items-center gap-1">
-                        @if ($builtIn?->hasLockedPermissions())
-                            <span class="text-xs text-muted-foreground">Tidak bisa diubah</span>
-                        @endif
-                        @can('update', $role)
-                            <x-button variant="ghost" size="icon" wire:click="edit({{ $role->id }})" aria-label="Ubah {{ Role::labelFor($role->name) }}" title="Ubah">
-                                <x-icon name="pencil" />
-                            </x-button>
-                        @endcan
-                        @can('delete', $role)
-                            <div x-data="{ open: false, loading: false }">
-                                <x-button variant="ghost" size="icon" class="text-red-600 hover:text-red-700 dark:text-red-400" x-on:click="open = true" aria-label="Hapus {{ $role->name }}" title="Hapus">
-                                    <x-icon name="trash" />
-                                </x-button>
-                                <x-modal title="Hapus role">
-                                    <p class="text-sm text-muted-foreground">Hapus role <strong class="text-foreground">{{ $role->name }}</strong>? Role yang masih dipakai pengguna tidak bisa dihapus.</p>
-                                    <x-slot:footer>
-                                        <x-button variant="ghost" x-on:click="open = false" x-bind:disabled="loading">Batal</x-button>
-                                        <x-button
-                                            class="bg-red-600 text-white hover:bg-red-700"
-                                            x-on:click="loading = true; $wire.delete({{ $role->id }}).then(() => { loading = false; open = false })"
-                                            x-bind:disabled="loading"
-                                        >Hapus role</x-button>
-                                    </x-slot:footer>
-                                </x-modal>
+            <div class="col-md-6 col-xl-4" wire:key="role-{{ $role->id }}">
+                <section class="card mb-0 h-100">
+                    <div class="card-header d-flex align-items-start gap-2">
+                        <div class="flex-grow-1" style="min-width: 0">
+                            <div class="d-flex align-items-center gap-2">
+                                <h5 class="card-title mb-0 text-truncate">{{ $roleLabel }}</h5>
+                                @if ($builtIn)
+                                    <span class="badge bg-light text-muted">Bawaan</span>
+                                @endif
                             </div>
-                        @endcan
+                            <p class="text-muted fs-12 tabular-nums mb-0 mt-1">
+                                {{ Number::format($role->users_count) }} pengguna · {{ $builtIn?->hasLockedPermissions() ? 'semua izin' : Number::format($granted->count()).' dari '.Number::format(count(Permission::cases())).' izin' }}
+                            </p>
+                        </div>
+                        <div class="d-flex flex-shrink-0 align-items-center gap-1">
+                            @if ($builtIn?->hasLockedPermissions())
+                                <span class="text-muted fs-12">Tidak bisa diubah</span>
+                            @endif
+                            @can('update', $role)
+                                <x-button variant="ghost" size="icon" wire:click="edit({{ $role->id }})" aria-label="Ubah {{ $roleLabel }}" title="Ubah">
+                                    <x-icon name="pencil" />
+                                </x-button>
+                            @endcan
+                            @can('delete', $role)
+                                <button
+                                    type="button"
+                                    class="btn btn-ghost-danger btn-icon btn-sm"
+                                    x-data
+                                    x-on:click="$confirm(@js($role->users_count > 0
+                                        ? ['blocked' => true, 'title' => 'Belum bisa dihapus', 'html' => 'Role <strong class="text-body">'.e($role->name).'</strong> masih dipakai oleh '.Number::format($role->users_count).' pengguna. Pindahkan mereka ke role lain dulu.']
+                                        : ['html' => 'Role <strong class="text-body">'.e($role->name).'</strong> akan dihapus.', 'confirmLabel' => 'Ya, hapus role', 'danger' => true]
+                                    )).then((ok) => ok && $wire.delete({{ $role->id }}))"
+                                    aria-label="Hapus {{ $role->name }}"
+                                    title="Hapus"
+                                >
+                                    <x-icon name="trash" />
+                                </button>
+                            @endcan
+                        </div>
                     </div>
-                </div>
 
-                <div class="h-px bg-border"></div>
-
-                <ul class="flex flex-col gap-1.5 text-sm">
-                    @foreach (Permission::cases() as $permission)
-                        @php($has = $granted->contains($permission->value))
-                        <li @class(['flex items-center gap-2', 'text-muted-foreground/60 line-through decoration-muted-foreground/40' => ! $has])>
-                            <span @class([
-                                'grid size-4 flex-none place-items-center rounded-full text-[10px] font-bold',
-                                'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' => $has,
-                                'bg-muted text-muted-foreground' => ! $has,
-                            ])>{{ $has ? '✓' : '–' }}</span>
-                            {{ $permission->label() }}
-                        </li>
-                    @endforeach
-                </ul>
-            </section>
+                    <ul class="list-unstyled vstack gap-2 card-body mb-0">
+                        @foreach (Permission::cases() as $permission)
+                            @php
+                                $has = $granted->contains($permission->value);
+                            @endphp
+                            <li @class(['d-flex align-items-center gap-2', 'text-muted text-decoration-line-through opacity-75' => ! $has])>
+                                <span @class(['avatar-title rounded-circle flex-shrink-0 fs-11', 'bg-success-subtle text-success' => $has, 'bg-light text-muted' => ! $has]) style="width: 1.125rem; height: 1.125rem">
+                                    <x-icon :name="$has ? 'check' : 'x'" />
+                                </span>
+                                {{ $permission->label() }}
+                            </li>
+                        @endforeach
+                    </ul>
+                </section>
+            </div>
         @endforeach
     </div>
 
     <x-modal :title="$editingId ? 'Ubah role' : 'Buat role'" show="showFormModal" size="lg">
-        <form id="role-form" wire:submit="save" class="flex flex-col gap-4">
+        <form
+            id="role-form"
+            x-data="confirmAction(@js([
+                'text' => 'Izin role ini berlaku untuk semua pengguna yang memakainya, mulai saat disimpan.',
+                'confirmLabel' => 'Ya, simpan',
+            ]))"
+            x-on:submit.prevent="ask('save')"
+            class="vstack gap-3"
+        >
             @if ($this->editingBuiltIn)
-                <div class="flex flex-col gap-1.5">
-                    <span class="text-sm font-medium">Nama role</span>
-                    <p class="text-sm">{{ $this->editingBuiltIn->label() }} <span class="text-xs text-muted-foreground">· role bawaan, nama tidak bisa diubah</span></p>
+                <div>
+                    <span class="form-label d-block">Nama role</span>
+                    <p class="mb-0">{{ $this->editingBuiltIn->label() }} <span class="text-muted fs-12">· role bawaan, nama tidak bisa diubah</span></p>
                 </div>
             @else
                 <x-field label="Nama role" for="role-name" error="name" hint="Contoh: Kasir, Gudang, Admin.">
@@ -98,32 +97,32 @@
                 </x-field>
             @endif
 
-            <div class="flex flex-col gap-3">
-                <div class="flex items-baseline justify-between gap-3">
-                    <span class="text-sm font-medium">Izin</span>
-                </div>
-
-                <div class="grid gap-3 sm:grid-cols-2">
+            <div>
+                <span class="form-label d-block">Izin</span>
+                <div class="row g-3">
                     @foreach (Permission::grouped() as $group => $groupPermissions)
-                        <fieldset class="rounded-lg border border-border p-3">
-                            <legend class="px-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase">{{ $group }}</legend>
-                            <div class="flex flex-col gap-2">
-                                @foreach ($groupPermissions as $permission)
-                                    <label class="flex cursor-pointer items-center gap-2.5 text-sm has-disabled:cursor-not-allowed has-disabled:opacity-70">
-                                        <input
-                                            type="checkbox"
-                                            wire:model="permissions"
-                                            value="{{ $permission->value }}"
-                                            class="size-4 rounded border-input accent-primary"
-                                        >
-                                        {{ $permission->label() }}
-                                    </label>
-                                @endforeach
-                            </div>
-                        </fieldset>
+                        <div class="col-sm-6" wire:key="permission-group-{{ $loop->index }}">
+                            <fieldset class="border rounded p-3 h-100">
+                                <legend class="float-none w-auto px-1 mb-2 fs-11 fw-semibold text-uppercase text-muted">{{ $group }}</legend>
+                                <div class="vstack gap-2">
+                                    @foreach ($groupPermissions as $permission)
+                                        <div class="form-check" wire:key="permission-{{ $permission->value }}">
+                                            <input
+                                                type="checkbox"
+                                                class="form-check-input"
+                                                id="permission-{{ $permission->value }}"
+                                                wire:model="permissions"
+                                                value="{{ $permission->value }}"
+                                            >
+                                            <label class="form-check-label" for="permission-{{ $permission->value }}">{{ $permission->label() }}</label>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </fieldset>
+                        </div>
                     @endforeach
                 </div>
-                @error('permissions.*') <p class="text-sm text-red-600">{{ $message }}</p> @enderror
+                @error('permissions.*') <div class="text-danger fs-12 mt-1">{{ $message }}</div> @enderror
             </div>
         </form>
 

@@ -81,8 +81,8 @@ function gatedBy(Permission $permission, Rental $rental): array
             'forbidden' => [['rentals.edit', [$rental]]],
         ],
         Permission::ReturnRentals => [
-            'visible' => [['dashboard', [], 'Kembalikan'], ['rentals.show', [$rental], 'Kembalikan']],
-            'forbidden' => [],
+            'visible' => [['rentals.show', [$rental], 'Kembalikan']],
+            'forbidden' => [['rentals.return', [$rental]]],
         ],
         Permission::CancelRentals => (function () use ($link): array {
             $upcoming = Rental::factory()->between(3, 4)->withUnits()->create(); // only rentals not yet started can be cancelled

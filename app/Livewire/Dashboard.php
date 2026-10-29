@@ -2,7 +2,6 @@
 
 namespace App\Livewire;
 
-use App\Livewire\Concerns\ReturnsRentals;
 use App\Livewire\Concerns\SortsTable;
 use App\Models\Customer;
 use App\Models\Rental;
@@ -12,10 +11,10 @@ use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
-#[Title('Dasbor')]
+#[Title('Dashboard')]
 class Dashboard extends Component
 {
-    use ReturnsRentals, SortsTable;
+    use SortsTable;
 
     #[Url(as: 'sort', except: 'due')]
     public string $sortBy = 'due';
@@ -36,11 +35,6 @@ class Dashboard extends Component
             'customer' => 'customer_name',
             'units' => 'open_items_count',
         ];
-    }
-
-    protected function perPage(): int
-    {
-        return 10;
     }
 
     public function render(): View

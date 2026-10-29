@@ -46,7 +46,8 @@ class DashboardMetrics
     }
 
     /**
-     * Rentals started this calendar month, with the change versus last month (null when last month had none).
+     * Rentals starting in this calendar month, with the change versus last month (null when last month had none).
+     * Bookings that start next month or later don't count yet, so this matches this month's bar in rentalsPerMonth().
      *
      * @return array{count: int, change_pct: int|null}
      */
@@ -55,7 +56,7 @@ class DashboardMetrics
         $startOfThisMonth = $this->now->startOfMonth();
         $startOfLastMonth = $startOfThisMonth->subMonthNoOverflow();
 
-        $thisMonth = Rental::query()->notCancelled()->where('start_date', '>=', $startOfThisMonth)->count();
+        $thisMonth = Rental::query()->notCancelled()->whereBetween('start_date', [$startOfThisMonth, $startOfThisMonth->endOfMonth()])->count();
         $lastMonth = Rental::query()->notCancelled()->whereBetween('start_date', [$startOfLastMonth, $startOfThisMonth->subSecond()])->count();
 
         return [

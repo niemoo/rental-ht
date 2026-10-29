@@ -3,7 +3,6 @@
 namespace App\Livewire\Rentals;
 
 use App\Enums\Permission;
-use App\Livewire\Concerns\ReturnsRentals;
 use App\Models\Rental;
 use App\Models\Unit;
 use App\Support\RentalBill;
@@ -12,8 +11,6 @@ use Livewire\Component;
 
 class Show extends Component
 {
-    use ReturnsRentals;
-
     public Rental $rental;
 
     /** Feedback shown in the bill section after deleting a payment or charge. */

@@ -10,6 +10,7 @@ use App\Livewire\Charges;
 use App\Livewire\Customers;
 use App\Livewire\Dashboard;
 use App\Livewire\Payments;
+use App\Livewire\Profile;
 use App\Livewire\Rentals;
 use App\Livewire\Reports;
 use App\Livewire\Roles;
@@ -27,6 +28,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout', LogoutController::class)->name('logout');
 
     Route::livewire('/dashboard', Dashboard::class)->name('dashboard');
+    Route::livewire('/profile', Profile::class)->name('profile');
     Route::livewire('/units', Units\Index::class)->name('units.index')->can(Permission::ViewUnits);
     Route::livewire('/units/new', Units\Form::class)->name('units.create')->can(Permission::CreateUnits);
     Route::livewire('/units/{unit}/edit', Units\Form::class)->name('units.edit')->can(Permission::EditUnits);
@@ -42,6 +44,7 @@ Route::middleware('auth')->group(function () {
     Route::livewire('/rentals/{rental}', Rentals\Show::class)->name('rentals.show')->can(Permission::ViewRentals);
     Route::livewire('/rentals/{rental}/edit', Rentals\Form::class)->name('rentals.edit')->can(Permission::EditRentals);
     Route::livewire('/rentals/{rental}/cancel', Rentals\Cancel::class)->name('rentals.cancel')->can(Permission::CancelRentals);
+    Route::livewire('/rentals/{rental}/return', Rentals\ReturnUnits::class)->name('rentals.return')->can(Permission::ReturnRentals);
     Route::livewire('/rentals/{rental}/payments/new', Payments\Form::class)->name('rentals.payments.create')->can(Permission::RecordPayments);
     Route::livewire('/rentals/{rental}/charges/new', Charges\Form::class)->name('rentals.charges.create')->can(Permission::ManageCharges);
     Route::get('/rentals/{rental}/invoice', RentalInvoiceController::class)->name('rentals.invoice')->can(Permission::ViewRentals);

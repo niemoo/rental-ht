@@ -29,10 +29,10 @@
 @if ($as === 'th')
 <th
     @if ($isSorted) aria-sort="{{ $sortDirection === 'desc' ? 'descending' : 'ascending' }}" @endif
-    {{ $attributes->class(['h-10 px-2 text-left align-middle font-medium whitespace-nowrap first:pl-4']) }}
+    {{ $attributes->class(['text-nowrap']) }}
 >
 @endif
-    <div x-data="{ popupOpen: false }" x-on:keydown.escape.window="popupOpen = false" @class(['inline-flex', $attributes->get('class') => $as !== 'th'])>
+    <div x-data="{ popupOpen: false }" x-on:keydown.escape.window="popupOpen = false" @class(['d-inline-flex', $attributes->get('class') => $as !== 'th'])>
         <button
             type="button"
             x-ref="trigger"
@@ -41,20 +41,19 @@
             aria-controls="{{ $popupId }}"
             x-bind:aria-expanded="popupOpen"
             @class([
-                'inline-flex items-center gap-1 transition-colors',
-                '-mx-1 rounded px-1 py-0.5 hover:bg-muted hover:text-foreground' => $as === 'th',
-                'h-8 rounded-lg border border-input bg-white px-2.5 text-sm hover:bg-muted dark:bg-input/30' => $as !== 'th',
-                'text-foreground' => $isSorted || $isFiltered,
+                'sort-button' => $as === 'th',
+                'is-active' => $as === 'th' && ($isSorted || $isFiltered),
+                'btn btn-soft-secondary btn-sm d-inline-flex align-items-center gap-1' => $as !== 'th',
             ])
         >
             {{ $label }}
             @if ($isFiltered)
-                <span class="rounded-full bg-primary px-1.5 text-[11px] leading-4 font-semibold text-primary-foreground tabular-nums" aria-label="{{ count($selected) }} filter aktif">{{ count($selected) }}</span>
+                <span class="badge bg-primary rounded-pill tabular-nums" aria-label="{{ count($selected) }} filter aktif">{{ count($selected) }}</span>
             @endif
             @if ($isSorted)
-                <x-icon :name="$sortDirection === 'desc' ? 'arrow-down' : 'arrow-up'" class="size-3.5" />
+                <x-icon :name="$sortDirection === 'desc' ? 'arrow-down' : 'arrow-up'" class="text-primary" />
             @endif
-            <x-icon name="filter" @class(['size-3.5', 'text-primary' => $isFiltered, 'text-muted-foreground/60' => ! $isFiltered]) />
+            <x-icon name="filter" @class(['text-primary' => $isFiltered, 'opacity-50' => ! $isFiltered]) />
         </button>
 
         <template x-teleport="body">
@@ -64,43 +63,43 @@
                 x-cloak
                 x-anchor.bottom-start.offset.4="$refs.trigger"
                 x-on:click.outside="if (! $refs.trigger.contains($event.target)) popupOpen = false"
-                x-transition.opacity.duration.100ms
                 role="dialog"
                 aria-label="Urutkan dan filter {{ $label }}"
-                class="z-50 w-56 rounded-lg border border-border bg-card p-1 text-sm font-normal shadow-md"
+                class="dropdown-menu show p-1 fw-normal text-body"
+                style="width: 15rem"
             >
                 @if ($column)
-                    <div class="px-2.5 pt-1.5 pb-1 text-[11px] font-semibold tracking-wider text-muted-foreground">URUTKAN</div>
+                    <h6 class="dropdown-header text-uppercase fs-11">Urutkan</h6>
                     @foreach (['asc' => ['Naik', 'arrow-up'], 'desc' => ['Turun', 'arrow-down']] as $direction => [$directionLabel, $icon])
                         @php($isActive = $isSorted && $sortDirection === $direction)
                         <button
                             type="button"
                             wire:click="sortTo('{{ $column }}', '{{ $direction }}')"
                             x-on:click="popupOpen = false"
-                            @class(['flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left hover:bg-muted', 'font-medium text-primary' => $isActive])
+                            @class(['dropdown-item d-flex align-items-center gap-2 rounded', 'active' => $isActive])
                         >
-                            <x-icon :name="$icon" class="size-4 text-muted-foreground" />
-                            <span class="flex-1">{{ $directionLabel }}</span>
+                            <x-icon :name="$icon" class="text-muted" />
+                            <span class="flex-grow-1">{{ $directionLabel }}</span>
                             @if ($isActive)
-                                <x-icon name="check" class="size-4" />
+                                <x-icon name="check" />
                             @endif
                         </button>
                     @endforeach
-                    <div class="my-1 h-px bg-border"></div>
+                    <div class="dropdown-divider"></div>
                 @endif
 
-                <div class="flex items-center justify-between px-2.5 pt-1.5 pb-1">
-                    <span class="text-[11px] font-semibold tracking-wider text-muted-foreground">FILTER</span>
+                <div class="d-flex align-items-center justify-content-between px-3 pt-2 pb-1">
+                    <span class="text-muted text-uppercase fw-semibold fs-11">Filter</span>
                     @if ($isFiltered)
-                        <button type="button" wire:click="$set('{{ $model }}', [])" class="text-xs font-medium text-primary hover:underline">Hapus filter</button>
+                        <button type="button" wire:click="$set('{{ $model }}', [])" class="btn btn-link btn-sm p-0 fs-12">Hapus filter</button>
                     @endif
                 </div>
                 @foreach ($options as $value => $optionLabel)
-                    <label wire:key="{{ $popupId }}-{{ $value }}" class="flex cursor-pointer items-center gap-2 rounded-md px-2.5 py-1.5 hover:bg-muted">
-                        <input type="checkbox" wire:model.live="{{ $model }}" value="{{ $value }}" class="size-4 rounded border-input accent-primary">
-                        <span class="flex-1">{{ $optionLabel }}</span>
+                    <label wire:key="{{ $popupId }}-{{ $value }}" class="dropdown-item d-flex align-items-center gap-2 rounded mb-0" style="cursor: pointer">
+                        <input type="checkbox" wire:model.live="{{ $model }}" value="{{ $value }}" class="form-check-input m-0">
+                        <span class="flex-grow-1">{{ $optionLabel }}</span>
                         @if ($counts !== null)
-                            <span class="text-xs tabular-nums text-muted-foreground">{{ $counts[$value] ?? 0 }}</span>
+                            <span class="badge bg-light text-muted tabular-nums">{{ $counts[$value] ?? 0 }}</span>
                         @endif
                     </label>
                 @endforeach

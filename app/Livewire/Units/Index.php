@@ -17,7 +17,7 @@ use Livewire\Attributes\Url;
 use Livewire\Component;
 
 /**
- * Units table. Kategori, Kondisi, Status and Jatuh tempo are filtered from popups on their column
+ * Units table. Kategori, Kondisi, Status and Selesai are filtered from popups on their column
  * headers (multi-select; an empty selection means no filter).
  */
 #[Title('Unit')]
@@ -28,8 +28,8 @@ class Index extends Component
     /** Status filter options: what the unit is doing right now. */
     private const STATUSES = ['available' => 'Tersedia', 'rented' => 'Disewa', 'unusable' => 'Tidak tersedia'];
 
-    /** Jatuh tempo filter options; both only match units that are out now. */
-    private const DUE_STATES = ['overdue' => 'Terlambat', 'on_time' => 'Belum jatuh tempo'];
+    /** Selesai (due date) filter options; both only match units that are out now. */
+    private const DUE_STATES = ['overdue' => 'Terlambat', 'on_time' => 'Tepat waktu'];
 
     #[Url(except: '')]
     public string $search = '';

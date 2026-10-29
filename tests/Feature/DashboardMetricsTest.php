@@ -32,6 +32,18 @@ test('monthly rental stat compares against last month', function () {
     expect((new DashboardMetrics)->rentalsThisMonth())->toBe(['count' => 3, 'change_pct' => 50]);
 });
 
+test('monthly rental stat leaves out bookings that start next month, matching the chart', function () {
+    $this->travelTo(now()->setDate(2026, 10, 26));
+
+    Rental::factory()->count(2)->create(['start_date' => '2026-10-05']);
+    Rental::factory()->count(3)->create(['start_date' => '2026-11-03', 'due_date' => '2026-11-04']); // booked now, starts next month
+
+    $metrics = new DashboardMetrics;
+
+    expect($metrics->rentalsThisMonth()['count'])->toBe(2)
+        ->and($metrics->rentalsPerMonth()['data'][11])->toBe(2);
+});
+
 test('rentals per month chart covers the last twelve months', function () {
     $this->travelTo(now()->setDate(2026, 10, 15));
 

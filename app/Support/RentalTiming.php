@@ -61,12 +61,12 @@ final readonly class RentalTiming
         if ($dueIn <= 1) {
             return new self(
                 RentalStatus::Soon,
-                $dueIn === 0 ? 'jatuh tempo hari ini' : 'jatuh tempo besok',
+                $dueIn === 0 ? 'selesai hari ini' : 'selesai besok',
                 'Segera',
             );
         }
 
-        return new self(RentalStatus::OnTime, "jatuh tempo {$dueIn} hari lagi", 'Berjalan');
+        return new self(RentalStatus::OnTime, "selesai {$dueIn} hari lagi", 'Berjalan');
     }
 
     private static function calendarDaysBetween(CarbonInterface $from, CarbonInterface $to): int

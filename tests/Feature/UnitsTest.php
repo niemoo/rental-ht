@@ -181,7 +181,7 @@ test('the filterable unit columns open a sort and filter popup', function (strin
     ['Kategori', 'categoryIds'],
     ['Kondisi', 'conditions'],
     ['Status', 'statuses'],
-    ['Jatuh tempo', 'dueStates'],
+    ['Selesai', 'dueStates'],
 ]);
 
 test('units can be sorted by each column', function (string $column, string $first, string $last) {
@@ -227,16 +227,51 @@ test('an unknown sort column from the url is ignored', function () {
 });
 
 test('the units list is paginated and searching goes back to page one', function () {
-    Unit::factory()->count(16)->sequence(fn ($sequence) => ['code' => sprintf('U-%02d', $sequence->index + 1)])->create();
+    Unit::factory()->count(11)->sequence(fn ($sequence) => ['code' => sprintf('U-%02d', $sequence->index + 1)])->create();
 
     Livewire::test(Index::class)
-        ->assertSee('U-15')
-        ->assertDontSee('U-16')
+        ->assertSee('U-10')
+        ->assertDontSee('U-11')
         ->call('nextPage')
-        ->assertSee('U-16')
-        ->assertDontSee('U-15')
+        ->assertSee('U-11')
+        ->assertDontSee('U-10')
         ->set('search', 'U-1')
         ->assertSet('paginators.page', 1);
+});
+
+test('the rows per page picker changes the page size and goes back to page one', function () {
+    Unit::factory()->count(25)->sequence(fn ($sequence) => ['code' => sprintf('U-%02d', $sequence->index + 1)])->create();
+
+    Livewire::test(Index::class)
+        ->assertSeeHtml('wire:model.live="perPage"')
+        ->call('nextPage')
+        ->set('perPage', '20')
+        ->assertSet('paginators.page', 1)
+        ->assertSee('U-20')
+        ->assertDontSee('U-21');
+});
+
+test('a long pagination shows the pages around the current one instead of every page', function () {
+    Unit::factory()->count(101)->create(); // 11 pages of 10
+
+    Livewire::test(Index::class)
+        ->assertSeeHtml("gotoPage(6, 'page')")
+        ->assertDontSeeHtml("gotoPage(7, 'page')")
+        ->assertSeeHtml("gotoPage(11, 'page')")
+        ->call('gotoPage', 6)
+        ->assertSeeHtml("gotoPage(5, 'page')")
+        ->assertSeeHtml("gotoPage(7, 'page')")
+        ->assertDontSeeHtml("gotoPage(4, 'page')")
+        ->assertDontSeeHtml("gotoPage(8, 'page')");
+});
+
+test('a rows per page value that is not one of the choices falls back to ten', function () {
+    Unit::factory()->count(12)->sequence(fn ($sequence) => ['code' => sprintf('U-%02d', $sequence->index + 1)])->create();
+
+    Livewire::withQueryParams(['per_page' => '7'])
+        ->test(Index::class)
+        ->assertSee('U-10')
+        ->assertDontSee('U-11');
 });
 
 test('each unit row has a three-dot menu with edit and delete', function () {
