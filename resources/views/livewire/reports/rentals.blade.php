@@ -1,5 +1,5 @@
 @php use App\Support\RentalBill; @endphp
-<div class="flex flex-col gap-5">
+<div class="vstack gap-4">
     <x-reports.header
         active="rentals"
         :report="$report"
@@ -10,105 +10,117 @@
         :to="$to"
     />
 
-    <div class="grid grid-cols-2 gap-4 lg:grid-cols-4 lg:gap-5">
-        <x-stat-tile label="Pemesanan" :value="$figures['count']" :sub="$figures['cancelled'] > 0 ? $figures['cancelled'].' dibatalkan ('.$figures['cancelled_pct'].'%)' : 'tidak ada yang batal'" />
-        <x-stat-tile label="Omzet" :value="RentalBill::rupiah($figures['omzet'])" sub="sudah atau belum dibayar" />
-        <x-stat-tile label="Rata-rata nilai" :value="RentalBill::rupiah($figures['average_value'])" sub="per pemesanan" />
-        <x-stat-tile label="Rata-rata durasi" :value="str_replace('.', ',', (string) $figures['average_days']).' hari'" sub="per pemesanan" />
+    <div class="row g-3">
+        <div class="col-sm-6 col-xl-3"><x-stat-tile label="Pemesanan" :value="$figures['count']" :sub="$figures['cancelled'] > 0 ? Number::format($figures['cancelled']).' dibatalkan ('.Number::format($figures['cancelled_pct']).'%)' : 'tidak ada yang batal'" icon="file-text" /></div>
+        <div class="col-sm-6 col-xl-3"><x-stat-tile label="Omzet" :value="RentalBill::rupiah($figures['omzet'])" sub="sudah atau belum dibayar" icon="chart-column" tone="success" /></div>
+        <div class="col-sm-6 col-xl-3"><x-stat-tile label="Rata-rata nilai" :value="RentalBill::rupiah($figures['average_value'])" sub="per pemesanan" icon="wallet" tone="info" /></div>
+        <div class="col-sm-6 col-xl-3"><x-stat-tile label="Rata-rata durasi" :value="Number::format($figures['average_days'], maxPrecision: 1).' hari'" sub="per pemesanan" icon="calendar-days" tone="warning" /></div>
     </div>
 
-    <div class="grid grid-cols-1 gap-5 lg:grid-cols-3">
-        <div class="min-w-0 lg:col-span-2">
+    <div class="row g-3">
+        <div class="col-xl-8">
             <x-chart-card title="Pemesanan & omzet" :subtitle="($this->reportPeriod->groupsByDay() ? 'Per hari' : 'Per bulan').', menurut tanggal mulai sewa'">
                 <x-chart type="rentalsAndOmzet" :data="$chart" />
             </x-chart-card>
         </div>
-        <x-chart-card title="Potongan & biaya tambahan" subtitle="Pada sewa periode ini">
-            <dl class="flex flex-col gap-2.5 text-sm">
-                <div class="flex justify-between gap-3">
-                    <dt class="text-muted-foreground">Diskon diberikan</dt>
-                    <dd class="font-medium tabular-nums text-red-600 dark:text-red-400">−{{ RentalBill::rupiah($figures['discount']) }}</dd>
-                </div>
-                <div class="h-px bg-border"></div>
-                @foreach ($figures['charges'] as $type => $total)
-                    <div class="flex justify-between gap-3" wire:key="charge-type-{{ $type }}">
-                        <dt class="text-muted-foreground">{{ \App\Enums\ChargeType::from($type)->label() }}</dt>
-                        <dd @class(['tabular-nums', 'font-medium' => $total > 0, 'text-muted-foreground' => $total === 0])>{{ RentalBill::rupiah($total) }}</dd>
-                    </div>
-                @endforeach
-            </dl>
-        </x-chart-card>
+        <div class="col-xl-4">
+            <x-chart-card title="Potongan & biaya tambahan" subtitle="Pada sewa periode ini">
+                <table class="table table-borderless table-sm mb-0">
+                    <tbody>
+                        <tr>
+                            <td class="text-muted ps-0">Diskon diberikan</td>
+                            <td class="text-end pe-0 fw-medium tabular-nums text-danger">−{{ RentalBill::rupiah($figures['discount']) }}</td>
+                        </tr>
+                        @foreach ($figures['charges'] as $type => $total)
+                            <tr wire:key="charge-type-{{ $type }}" @class(['border-top border-top-dashed' => $loop->first])>
+                                <td class="text-muted ps-0">{{ \App\Enums\ChargeType::from($type)->label() }}</td>
+                                <td @class(['text-end pe-0 tabular-nums', 'fw-medium' => $total > 0, 'text-muted' => $total === 0])>{{ RentalBill::rupiah($total) }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </x-chart-card>
+        </div>
     </div>
 
-    <div class="flex flex-col gap-3">
-        <div class="flex flex-wrap items-center justify-between gap-2.5">
-            <h2 class="text-base font-semibold">Daftar pemesanan <span class="text-sm font-medium tabular-nums text-muted-foreground">· {{ $rentals->total() }}</span></h2>
-            <div class="flex gap-2.5 lg:hidden">
-                <x-column-filter as="button" label="Status" model="statuses" :options="$statusFilter['options']" :counts="$statusFilter['counts']" :selected="$statuses" />
-                <x-sort-select
-                    :options="['start' => 'Mulai', 'invoice' => 'Invoice', 'customer' => 'Pelanggan', 'days' => 'Durasi', 'units' => 'Unit', 'status' => 'Status', 'total' => 'Total', 'balance' => 'Sisa']"
-                    :sort-by="$sortBy"
-                    :sort-direction="$sortDirection"
-                />
-            </div>
+    <div class="card mb-0">
+        <div class="card-header d-flex flex-wrap align-items-center gap-2">
+            <h5 class="card-title mb-0 flex-grow-1">
+                Daftar pemesanan <span class="text-muted fw-normal fs-13 tabular-nums">· {{ Number::format($rentals->total()) }}</span>
+            </h5>
+            <x-column-filter as="button" class="d-lg-none" label="Status" model="statuses" :options="$statusFilter['options']" :counts="$statusFilter['counts']" :selected="$statuses" />
+            <x-sort-select
+                class="d-lg-none"
+                :options="['start' => 'Mulai', 'invoice' => 'Invoice', 'customer' => 'Pelanggan', 'days' => 'Durasi', 'units' => 'Unit', 'status' => 'Status', 'total' => 'Total', 'balance' => 'Sisa']"
+                :sort-by="$sortBy"
+                :sort-direction="$sortDirection"
+            />
         </div>
 
         {{-- Desktop table --}}
-        <x-card class="hidden lg:block">
-            <div class="overflow-x-auto"><table class="w-full text-sm">
-                <thead>
-                    <tr class="border-b">
-                        <x-sort-header column="invoice" :sort-by="$sortBy" :sort-direction="$sortDirection">Invoice</x-sort-header>
-                        <x-sort-header column="customer" :sort-by="$sortBy" :sort-direction="$sortDirection">Pelanggan</x-sort-header>
-                        <x-sort-header column="start" :sort-by="$sortBy" :sort-direction="$sortDirection">Sewa</x-sort-header>
-                        <x-sort-header column="days" :sort-by="$sortBy" :sort-direction="$sortDirection">Hari</x-sort-header>
-                        <x-sort-header column="units" :sort-by="$sortBy" :sort-direction="$sortDirection">Unit</x-sort-header>
-                        <x-column-filter label="Status" model="statuses" :options="$statusFilter['options']" :counts="$statusFilter['counts']" :selected="$statuses" column="status" :sort-by="$sortBy" :sort-direction="$sortDirection" />
-                        <x-sort-header column="total" :sort-by="$sortBy" :sort-direction="$sortDirection">Total</x-sort-header>
-                        <x-sort-header column="balance" :sort-by="$sortBy" :sort-direction="$sortDirection" class="pr-4">Sisa</x-sort-header>
-                    </tr>
-                </thead>
-                <tbody class="[&_tr:last-child]:border-0">
-                    @forelse ($rentals as $rental)
-                        @php($timing = $rental->timing())
-                        <tr wire:key="report-rental-row-{{ $rental->id }}" class="border-b transition-colors hover:bg-muted/50">
-                            <td class="p-2 pl-4 align-middle whitespace-nowrap tabular-nums"><a href="{{ route('rentals.show', $rental) }}" class="hover:underline">{{ $rental->invoice_number }}</a></td>
-                            <td class="p-2 align-middle whitespace-nowrap">
-                                <div class="font-medium">{{ $rental->customer_name }}</div>
-                                @if ($rental->event_name)
-                                    <div class="max-w-56 truncate text-xs text-muted-foreground">{{ $rental->event_name }}</div>
-                                @endif
-                            </td>
-                            <td class="p-2 align-middle whitespace-nowrap tabular-nums">{{ $rental->start_date->translatedFormat('j M') }} → {{ $rental->due_date->translatedFormat('j M Y') }}</td>
-                            <td class="p-2 align-middle whitespace-nowrap tabular-nums">{{ $rental->days }}</td>
-                            <td class="p-2 align-middle whitespace-nowrap tabular-nums">{{ $rental->items_count }}</td>
-                            <td class="p-2 align-middle whitespace-nowrap"><x-status-badge :status="$timing->status">{{ $timing->pill }}</x-status-badge></td>
-                            <td class="p-2 align-middle whitespace-nowrap tabular-nums">{{ RentalBill::rupiah($rental->total_amount) }}</td>
-                            <td @class(['p-2 pr-4 align-middle whitespace-nowrap tabular-nums', 'text-muted-foreground' => (int) $rental->balance === 0, 'font-medium' => (int) $rental->balance !== 0])>{{ RentalBill::rupiah((int) $rental->balance) }}</td>
+        <div class="card-body d-none d-lg-block">
+            <div class="table-responsive table-card">
+                <table class="table table-hover table-nowrap align-middle mb-0">
+                    <thead class="table-light text-muted">
+                        <tr>
+                            <x-sort-header column="invoice" :sort-by="$sortBy" :sort-direction="$sortDirection">Invoice</x-sort-header>
+                            <x-sort-header column="customer" :sort-by="$sortBy" :sort-direction="$sortDirection">Pelanggan</x-sort-header>
+                            <x-sort-header column="start" :sort-by="$sortBy" :sort-direction="$sortDirection">Sewa</x-sort-header>
+                            <x-sort-header column="days" :sort-by="$sortBy" :sort-direction="$sortDirection">Hari</x-sort-header>
+                            <x-sort-header column="units" :sort-by="$sortBy" :sort-direction="$sortDirection">Unit</x-sort-header>
+                            <x-column-filter label="Status" model="statuses" :options="$statusFilter['options']" :counts="$statusFilter['counts']" :selected="$statuses" column="status" :sort-by="$sortBy" :sort-direction="$sortDirection" />
+                            <x-sort-header column="total" :sort-by="$sortBy" :sort-direction="$sortDirection" class="text-end">Total</x-sort-header>
+                            <x-sort-header column="balance" :sort-by="$sortBy" :sort-direction="$sortDirection" class="text-end">Sisa</x-sort-header>
                         </tr>
-                    @empty
-                        <tr><td colspan="8"><x-empty-state>Tidak ada pemesanan di periode ini.</x-empty-state></td></tr>
-                    @endforelse
-                </tbody>
-            </table></div>
-        </x-card>
+                    </thead>
+                    <tbody>
+                        @forelse ($rentals as $rental)
+                            @php
+                                $timing = $rental->timing();
+                            @endphp
+                            <tr wire:key="report-rental-row-{{ $rental->id }}">
+                                <td class="tabular-nums"><a href="{{ route('rentals.show', $rental) }}" class="fw-medium link-primary">{{ $rental->invoice_number }}</a></td>
+                                <td>
+                                    <div class="fw-medium">{{ $rental->customer_name }}</div>
+                                    @if ($rental->event_name)
+                                        <div class="text-muted fs-12 text-truncate" style="max-width: 14rem">{{ $rental->event_name }}</div>
+                                    @endif
+                                </td>
+                                <td class="tabular-nums">{{ $rental->start_date->translatedFormat('j M') }} → {{ $rental->due_date->translatedFormat('j M Y') }}</td>
+                                <td class="tabular-nums">{{ Number::format($rental->days) }}</td>
+                                <td class="tabular-nums">{{ Number::format($rental->items_count) }}</td>
+                                <td><x-status-badge :status="$timing->status">{{ $timing->pill }}</x-status-badge></td>
+                                <td class="text-end tabular-nums">{{ RentalBill::rupiah($rental->total_amount) }}</td>
+                                <td @class(['text-end tabular-nums', 'text-muted' => (int) $rental->balance === 0, 'fw-medium' => (int) $rental->balance !== 0])>{{ RentalBill::rupiah((int) $rental->balance) }}</td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="8"><x-empty-state>Tidak ada pemesanan di periode ini.</x-empty-state></td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
         {{-- Mobile list --}}
-        <x-card class="lg:hidden">
+        <ul class="list-group list-group-flush d-lg-none">
             @forelse ($rentals as $rental)
-                @php($timing = $rental->timing())
-                <a href="{{ route('rentals.show', $rental) }}" wire:key="report-rental-item-{{ $rental->id }}" class="flex items-center gap-3 border-b border-border px-4 py-3 transition-colors last:border-b-0 hover:bg-muted/50">
-                    <div class="min-w-0 flex-1">
-                        <div class="truncate text-sm font-medium">{{ $rental->customer_name }}</div>
-                        <div class="truncate text-xs tabular-nums text-muted-foreground">{{ $rental->start_date->translatedFormat('j M') }} → {{ $rental->due_date->translatedFormat('j M') }} · {{ RentalBill::rupiah($rental->total_amount) }}</div>
+                @php
+                    $timing = $rental->timing();
+                @endphp
+                <li wire:key="report-rental-item-{{ $rental->id }}" class="list-group-item d-flex align-items-center gap-3 py-3">
+                    <div class="flex-grow-1" style="min-width: 0">
+                        <a href="{{ route('rentals.show', $rental) }}" class="d-block fw-medium text-truncate link-body-emphasis">{{ $rental->customer_name }}</a>
+                        <div class="text-muted fs-12 text-truncate tabular-nums">{{ $rental->start_date->translatedFormat('j M') }} → {{ $rental->due_date->translatedFormat('j M') }} · {{ RentalBill::rupiah($rental->total_amount) }}</div>
                     </div>
                     <x-status-badge :status="$timing->status">{{ $timing->pill }}</x-status-badge>
-                </a>
+                </li>
             @empty
-                <x-empty-state>Tidak ada pemesanan di periode ini.</x-empty-state>
+                <li class="list-group-item"><x-empty-state>Tidak ada pemesanan di periode ini.</x-empty-state></li>
             @endforelse
-        </x-card>
+        </ul>
 
-        {{ $rentals->links() }}
+        @if ($rentals->total() > 0)
+            <div class="card-footer">{{ $rentals->links() }}</div>
+        @endif
     </div>
 </div>

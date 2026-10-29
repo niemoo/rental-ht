@@ -31,6 +31,22 @@ function palette() {
 
 const axisLabels = (t) => ({ style: { colors: t.axis, fontFamily: FONT } });
 
+/**
+ * Period axis labels for the report charts. A year of months ("Jan 2026" … "Des 2026") doesn't fit side by side,
+ * so the axis drops the year when there are many; the tooltip still shows the full label.
+ */
+const periodAxis = (categories, t) => ({
+    categories,
+    axisBorder: { show: false },
+    axisTicks: { show: false },
+    labels: { ...axisLabels(t), rotate: 0, hideOverlappingLabels: true, formatter: (v) => (categories.length > 6 ? String(v ?? '').replace(/ \d{4}$/, '') : v) },
+    tickAmount: Math.min(categories.length, 12),
+    tooltip: { enabled: false },
+});
+
+/** On phones the period labels are turned so a year of months still fits under the chart. */
+const periodAxisResponsive = [{ breakpoint: 576, options: { xaxis: { labels: { rotate: -45, rotateAlways: true } } } }];
+
 /** Rp1.250.000 */
 const rupiah = (v) => `${v < 0 ? '−' : ''}Rp${Math.abs(Math.round(v)).toLocaleString('id-ID')}`;
 
@@ -63,11 +79,12 @@ const builders = {
         colors: [t.success, t.primary, t.warning],
         plotOptions: { bar: { borderRadius: 3, columnWidth: categories.length > 20 ? '70%' : '48%' } },
         dataLabels: { enabled: false },
-        xaxis: { categories, axisBorder: { show: false }, axisTicks: { show: false }, labels: { ...axisLabels(t), hideOverlappingLabels: true, rotate: 0 }, tickAmount: Math.min(categories.length, 12) },
+        xaxis: periodAxis(categories, t),
+        responsive: periodAxisResponsive,
         yaxis: { labels: { ...axisLabels(t), formatter: rupiahShort } },
         grid: { borderColor: t.grid, strokeDashArray: 4, xaxis: { lines: { show: false } } },
         legend: { show: true, position: 'top', horizontalAlign: 'left', fontFamily: FONT, labels: { colors: t.axis } },
-        tooltip: { theme: t.mode, y: { formatter: rupiah } },
+        tooltip: { theme: t.mode, x: { formatter: (v, { dataPointIndex }) => categories[dataPointIndex] ?? v }, y: { formatter: rupiah } },
     }),
 
     rentalsAndOmzet: ({ categories, rentals, omzet }, t) => ({
@@ -81,14 +98,15 @@ const builders = {
         stroke: { width: [0, 3], curve: 'smooth' },
         plotOptions: { bar: { borderRadius: 3, columnWidth: categories.length > 20 ? '70%' : '48%' } },
         dataLabels: { enabled: false },
-        xaxis: { categories, axisBorder: { show: false }, axisTicks: { show: false }, labels: { ...axisLabels(t), hideOverlappingLabels: true, rotate: 0 }, tickAmount: Math.min(categories.length, 12) },
+        xaxis: periodAxis(categories, t),
+        responsive: periodAxisResponsive,
         yaxis: [
             { title: { text: 'Pemesanan', style: { color: t.axis, fontFamily: FONT, fontWeight: 500 } }, labels: { ...axisLabels(t), formatter: (v) => `${Math.round(v)}` }, forceNiceScale: true, min: 0 },
             { opposite: true, title: { text: 'Omzet', style: { color: t.axis, fontFamily: FONT, fontWeight: 500 } }, labels: { ...axisLabels(t), formatter: rupiahShort }, min: 0 },
         ],
         grid: { borderColor: t.grid, strokeDashArray: 4, xaxis: { lines: { show: false } } },
         legend: { show: true, position: 'top', horizontalAlign: 'left', fontFamily: FONT, labels: { colors: t.axis } },
-        tooltip: { theme: t.mode, shared: true, intersect: false, y: { formatter: (v, { seriesIndex }) => (seriesIndex === 1 ? rupiah(v) : `${v} pemesanan`) } },
+        tooltip: { theme: t.mode, shared: true, intersect: false, x: { formatter: (v, { dataPointIndex }) => categories[dataPointIndex] ?? v }, y: { formatter: (v, { seriesIndex }) => (seriesIndex === 1 ? rupiah(v) : `${v} pemesanan`) } },
     }),
 
     rentalActivity: ({ categories, out, returned }, t) => ({

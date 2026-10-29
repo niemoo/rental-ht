@@ -27,8 +27,8 @@
                     <h3 class="text-white mb-1">{{ $user->name }}</h3>
                     <p class="text-white text-opacity-75">{{ $user->roleLabel() }}</p>
                     <div class="hstack flex-wrap text-white-50 gap-1">
-                        <div class="me-2"><x-icon name="mail" class="me-1 text-white text-opacity-75 fs-16 align-middle" />{{ $user->email }}</div>
-                        <div><x-icon name="building" class="me-1 text-white text-opacity-75 fs-16 align-middle" />{{ config('invoice.business.name') }}</div>
+                        <div class="d-flex align-items-center me-2"><x-icon name="mail" class="me-1 text-white text-opacity-75 fs-16" />{{ $user->email }}</div>
+                        <div class="d-flex align-items-center"><x-icon name="building" class="me-1 text-white text-opacity-75 fs-16" />{{ config('invoice.business.name') }}</div>
                     </div>
                 </div>
             </div>
@@ -56,7 +56,7 @@
         </ul>
         @if ($canEditProfile)
             <div class="flex-shrink-0">
-                <a href="{{ route('users.edit', $user) }}" class="btn btn-success"><x-icon name="pencil" class="align-bottom" /> Ubah profil</a>
+                <a href="{{ route('users.edit', $user) }}" class="btn btn-success d-inline-flex align-items-center"><x-icon name="pencil" class="me-1" /> Ubah profil</a>
             </div>
         @endif
     </div>

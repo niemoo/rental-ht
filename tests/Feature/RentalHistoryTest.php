@@ -33,6 +33,24 @@ test('history can be filtered by status with a count for each', function () {
     expect($names())->toBe(['Aktif', 'Beres', 'Nanti']);
 });
 
+test('the status tabs pick one status and show which one is picked', function () {
+    Rental::factory()->withUnits()->create();
+    Rental::factory()->between(3, 5)->withUnits()->create();
+
+    $component = Livewire::test(Index::class)
+        ->assertSeeHtml("wire:click=\"\$set('statuses', [&#039;active&#039;])\"")
+        ->assertSeeHtml('aria-selected="true"');
+
+    expect(substr_count($component->html(), 'aria-selected="true"'))->toBe(1);
+
+    $component->set('statuses', ['active']);
+    expect($component->viewData('rentals'))->toHaveCount(1)
+        ->and(preg_match('/aria-selected="true"[^>]*>\s*Aktif/', $component->html()))->toBe(1);
+
+    $component->set('statuses', ['active', 'upcoming']);
+    expect(substr_count($component->html(), 'aria-selected="true"'))->toBe(0);
+});
+
 test('history can be sorted by status', function () {
     Rental::factory()->between(-9, -6)->withUnits()->returned()->create(['customer_id' => Customer::factory()->create(['name' => 'Beres'])->id]);
     Rental::factory()->between(3, 5)->withUnits()->create(['customer_id' => Customer::factory()->create(['name' => 'Nanti'])->id]);

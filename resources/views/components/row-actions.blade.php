@@ -29,14 +29,14 @@
     >
         @if ($inline)
             @if ($detailHref)
-                <a href="{{ $detailHref }}" class="btn btn-soft-secondary btn-sm"><x-icon name="eye" class="align-bottom me-1" /> Detail</a>
+                <a href="{{ $detailHref }}" class="btn btn-soft-secondary btn-sm d-inline-flex align-items-center"><x-icon name="eye" class="me-1" /> Detail</a>
             @endif
             @if ($editHref)
-                <a href="{{ $editHref }}" class="btn btn-soft-primary btn-sm"><x-icon name="pencil" class="align-bottom me-1" /> Ubah</a>
+                <a href="{{ $editHref }}" class="btn btn-soft-primary btn-sm d-inline-flex align-items-center"><x-icon name="pencil" class="me-1" /> Ubah</a>
             @endif
             @if ($deleteAction)
-                <button type="button" class="btn btn-soft-danger btn-sm" x-on:click="remove()" aria-label="Hapus {{ $label }}">
-                    <x-icon name="trash" class="align-bottom me-1" /> Hapus
+                <button type="button" class="btn btn-soft-danger btn-sm d-inline-flex align-items-center" x-on:click="remove()" aria-label="Hapus {{ $label }}">
+                    <x-icon name="trash" class="me-1" /> Hapus
                 </button>
             @endif
         @else
@@ -63,18 +63,18 @@
                     class="dropdown-menu show"
                 >
                     @if ($detailHref)
-                        <li><a href="{{ $detailHref }}" role="menuitem" class="dropdown-item"><x-icon name="eye" class="align-bottom me-2 text-muted" /> Detail</a></li>
+                        <li><a href="{{ $detailHref }}" role="menuitem" class="dropdown-item d-flex align-items-center"><x-icon name="eye" class="me-2 text-muted" /> Detail</a></li>
                     @endif
                     @if ($editHref)
-                        <li><a href="{{ $editHref }}" role="menuitem" class="dropdown-item"><x-icon name="pencil" class="align-bottom me-2 text-muted" /> Ubah</a></li>
+                        <li><a href="{{ $editHref }}" role="menuitem" class="dropdown-item d-flex align-items-center"><x-icon name="pencil" class="me-2 text-muted" /> Ubah</a></li>
                     @endif
                     @if ($deleteAction)
                         @if ($detailHref || $editHref)
                             <li><hr class="dropdown-divider"></li>
                         @endif
                         <li>
-                            <button type="button" role="menuitem" x-on:click="remove()" class="dropdown-item text-danger" aria-label="Hapus {{ $label }}">
-                                <x-icon name="trash" class="align-bottom me-2" /> Hapus
+                            <button type="button" role="menuitem" x-on:click="remove()" class="dropdown-item d-flex align-items-center text-danger" aria-label="Hapus {{ $label }}">
+                                <x-icon name="trash" class="me-2" /> Hapus
                             </button>
                         </li>
                     @endif

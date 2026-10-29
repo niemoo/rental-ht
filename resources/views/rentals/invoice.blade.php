@@ -3,231 +3,271 @@
     Business details come from config/invoice.php.
 --}}
 @php
+    use App\Enums\PaymentStatus;
     use App\Support\RentalBill;
 
     $business = config('invoice.business');
     $bank = config('invoice.bank');
     $status = $bill->status();
+    $balance = $bill->balance();
     $rowNumber = 0;
+    $statusBadge = match ($status) {
+        PaymentStatus::Paid => 'bg-success-subtle text-success',
+        PaymentStatus::Partial => 'bg-warning-subtle text-warning',
+        PaymentStatus::Unpaid => 'bg-danger-subtle text-danger',
+        PaymentStatus::Overpaid => 'bg-primary-subtle text-primary',
+    };
 @endphp
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" data-bs-theme="light">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Invoice {{ $rental->invoice_number }} · {{ config('invoice.business.name') }}</title>
+        @include('partials.favicon')
         @fonts
         @include('partials.velzon-styles')
         @vite(['resources/css/app.css'])
         <style>
             @page { size: A4; margin: 0; }
+
+            body { padding: 1.5rem 0; background: #f3f3f9; color: #495057; }
+            .invoice-toolbar { max-width: 210mm; }
+            .invoice-sheet { position: relative; display: flex; flex-direction: column; max-width: 210mm; min-height: 297mm; margin: 0 auto; overflow: hidden; background: #fff; box-shadow: 0 1rem 2.5rem rgba(56, 65, 74, 0.12); }
+            .invoice-accent { height: 0.5rem; background: var(--vz-primary); }
+            .invoice-body { display: flex; flex: 1; flex-direction: column; padding: 2.5rem 14mm 2rem; }
+            .invoice-label { font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #878a99; }
+            .invoice-panel { background: #f3f6f9; border-radius: 0.5rem; }
+            .invoice-lines > thead > tr > th { border-bottom: 2px solid #212529; padding: 0 0.5rem 0.6rem; }
+            .invoice-lines > tbody > tr > td { padding: 0.85rem 0.5rem; vertical-align: top; }
+            .invoice-lines > :not(caption) > * > *:first-child { padding-left: 0; }
+            .invoice-lines > :not(caption) > * > *:last-child { padding-right: 0; }
+            .invoice-totals { width: 280px; flex-shrink: 0; }
+            .invoice-balance { color: #fff; border-radius: 0.5rem; }
+            .invoice-signature { width: 9rem; }
+            .invoice-signature-line { margin-top: 4rem; padding-top: 0.375rem; border-top: 1px solid #ced4da; }
+            .invoice-cancelled td { color: #adb5bd !important; text-decoration: line-through; }
+
+            @media print {
+                body { padding: 0; background: #fff; }
+                /* Fills one A4 page (a hair under, so rounding never pushes the footer onto a second); a very long invoice still flows on. */
+                .invoice-sheet { max-width: none; min-height: 296mm; overflow: visible; box-shadow: none; }
+            }
         </style>
     </head>
-    <body class="min-h-screen bg-slate-100 py-8 text-slate-800 antialiased print:bg-white print:py-0">
-        <div class="mx-auto mb-4 flex max-w-[210mm] items-center justify-between gap-3 px-4 print:hidden">
-            <a href="{{ route('rentals.show', $rental) }}" class="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-900">
-                <x-icon name="arrow-left" /> Kembali
-            </a>
-            <button type="button" onclick="window.print()" class="inline-flex h-9 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-medium text-white shadow-sm hover:bg-primary/90">
-                <x-icon name="printer" class="size-4" /> Cetak / PDF
-            </button>
+    <body>
+        <div class="invoice-toolbar d-flex align-items-center justify-content-between gap-3 mx-auto mb-3 px-3 d-print-none">
+            <a href="{{ route('rentals.show', $rental) }}" class="btn btn-light d-inline-flex align-items-center gap-1"><x-icon name="arrow-left" /> Kembali</a>
+            <button type="button" onclick="window.print()" class="btn btn-primary d-inline-flex align-items-center gap-1"><x-icon name="printer" /> Cetak / PDF</button>
         </div>
 
-        <main class="relative mx-auto flex min-h-[297mm] max-w-[210mm] flex-col overflow-hidden bg-white shadow-xl shadow-slate-300/50 print:shadow-none">
-            <div class="h-2 bg-primary"></div>
+        <main class="invoice-sheet">
+            <div class="invoice-accent"></div>
 
-            <div class="flex flex-1 flex-col px-[14mm] pt-10 pb-8">
+            <div class="invoice-body">
                 {{-- Header --}}
-                <header class="flex items-start justify-between gap-8">
+                <header class="d-flex align-items-start justify-content-between gap-4">
                     <div>
-                        <img src="{{ asset('images/krc-logo.png') }}" alt="KRC — {{ $business['name'] }}" class="h-20 w-auto">
-                        <div class="mt-3 text-xs leading-relaxed text-slate-500">
+                        <img src="{{ asset('images/krc-logo.png') }}" alt="KRC — {{ $business['name'] }}" style="height: 5rem; width: auto">
+                        <p class="text-muted fs-12 lh-base mb-0 mt-3">
                             {{ $business['address'] }}<br>
                             {{ $business['phone'] }} · {{ $business['email'] }}
-                        </div>
+                        </p>
                     </div>
-                    <div class="text-right">
-                        <h1 class="text-4xl font-bold tracking-tight text-slate-900">INVOICE</h1>
-                        <p class="mt-1 text-sm font-medium tabular-nums text-slate-500">{{ $rental->invoice_number }}</p>
-                        @if ($bill->isCancelled)
-                            <span class="mt-3 inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold tracking-wide text-slate-600 ring-1 ring-slate-300">DIBATALKAN</span>
-                        @endif
-                        <span @class([
-                            'mt-3 inline-flex rounded-full px-3 py-1 text-xs font-semibold tracking-wide uppercase ring-1',
-                            'bg-emerald-50 text-emerald-700 ring-emerald-200' => $status === \App\Enums\PaymentStatus::Paid,
-                            'bg-amber-50 text-amber-700 ring-amber-200' => $status === \App\Enums\PaymentStatus::Partial,
-                            'bg-red-50 text-red-700 ring-red-200' => $status === \App\Enums\PaymentStatus::Unpaid,
-                            'bg-violet-50 text-violet-700 ring-violet-200' => $status === \App\Enums\PaymentStatus::Overpaid,
-                        ])>{{ $status === \App\Enums\PaymentStatus::Partial ? 'DP · belum lunas' : $status->label() }}</span>
+                    <div class="text-end">
+                        <h1 class="display-6 fw-bold text-dark mb-1">INVOICE</h1>
+                        <p class="text-muted fw-medium tabular-nums mb-3">{{ $rental->invoice_number }}</p>
+                        <div class="d-flex justify-content-end flex-wrap gap-1">
+                            @if ($bill->isCancelled)
+                                <span class="badge bg-light text-body border fs-11 px-3 py-2">DIBATALKAN</span>
+                            @endif
+                            <span class="badge {{ $statusBadge }} text-uppercase fs-11 px-3 py-2">{{ $status === PaymentStatus::Partial ? 'DP · belum lunas' : $status->label() }}</span>
+                        </div>
                     </div>
                 </header>
 
                 {{-- Parties & dates --}}
-                <section class="mt-10 grid grid-cols-3 gap-6 rounded-xl bg-slate-50 p-5 text-sm">
-                    <div>
-                        <h2 class="text-[11px] font-semibold tracking-wider text-slate-400">DITAGIHKAN KEPADA</h2>
-                        <p class="mt-1.5 font-semibold text-slate-900">{{ $rental->customer->name }}</p>
-                        <p class="tabular-nums text-slate-600">{{ $rental->customer->phone }}</p>
+                <section class="invoice-panel row g-0 mt-5 p-3 fs-13">
+                    <div class="col-4 pe-3">
+                        <h2 class="invoice-label mb-2">Ditagihkan kepada</h2>
+                        <p class="fw-semibold text-dark mb-0">{{ $rental->customer->name }}</p>
+                        <p class="tabular-nums mb-0">{{ $rental->customer->phone }}</p>
                     </div>
-                    <div>
-                        <h2 class="text-[11px] font-semibold tracking-wider text-slate-400">ACARA</h2>
+                    <div class="col-3 pe-3">
+                        <h2 class="invoice-label mb-2">Acara</h2>
                         @if ($rental->hasEventDetails())
-                            <p class="mt-1.5 font-semibold text-slate-900">{{ $rental->event_name ?? '—' }}</p>
+                            <p class="fw-semibold text-dark mb-0">{{ $rental->event_name ?? '—' }}</p>
                             @if ($rental->event_address)
-                                <p class="text-slate-600">{{ $rental->event_address }}</p>
+                                <p class="mb-0">{{ $rental->event_address }}</p>
                             @endif
                         @else
-                            <p class="mt-1.5 text-slate-400">—</p>
+                            <p class="text-muted mb-0">—</p>
                         @endif
                     </div>
-                    <dl class="flex flex-col gap-1.5">
-                        @foreach ([
-                            'Tanggal invoice' => $rental->created_at->translatedFormat('j M Y'),
-                            'Masa sewa' => $rental->start_date->translatedFormat('j M').' – '.$rental->due_date->translatedFormat('j M Y'),
-                            'Durasi' => $bill->days.' hari',
-                        ] as $label => $value)
-                            <div class="flex justify-between gap-3">
-                                <dt class="text-slate-500">{{ $label }}</dt>
-                                <dd class="text-right font-medium tabular-nums text-slate-900">{{ $value }}</dd>
-                            </div>
-                        @endforeach
-                    </dl>
+                    <div class="col-5">
+                        <table class="table table-borderless table-sm fs-13 mb-0 bg-transparent">
+                            @foreach ([
+                                'Tanggal invoice' => $rental->created_at->translatedFormat('j M Y'),
+                                'Masa sewa' => $rental->start_date->translatedFormat('j M').' – '.$rental->due_date->translatedFormat('j M Y'),
+                                'Durasi' => Number::format($bill->days).' hari',
+                            ] as $label => $value)
+                                <tr>
+                                    <td class="text-muted text-nowrap p-0 pb-1 pe-3 bg-transparent">{{ $label }}</td>
+                                    <td class="text-end text-nowrap fw-medium text-dark tabular-nums p-0 pb-1 bg-transparent">{{ $value }}</td>
+                                </tr>
+                            @endforeach
+                        </table>
+                    </div>
                 </section>
 
                 @if ($bill->isCancelled)
-                    <p class="mt-6 rounded-lg border border-slate-200 px-4 py-3 text-sm text-slate-600">
+                    <p class="border rounded px-3 py-2 fs-13 mt-4 mb-0">
                         Penyewaan ini dibatalkan pada {{ $rental->cancelled_at->translatedFormat('j M Y') }}{{ $rental->cancellation_reason ? ': '.$rental->cancellation_reason : '' }}.
                         Yang ditagihkan hanya biaya pembatalan{{ $bill->charges > 0 ? ' dan biaya tambahan' : '' }}.
                     </p>
                 @endif
 
                 {{-- Lines --}}
-                <table class="mt-8 w-full text-sm">
+                <table class="table invoice-lines fs-13 mt-4 mb-0">
                     <thead>
-                        <tr class="border-b-2 border-slate-900 text-left text-[11px] font-semibold tracking-wider text-slate-500">
-                            <th class="w-8 pb-2.5">NO</th>
-                            <th class="pb-2.5">BARANG / BIAYA</th>
-                            <th class="pb-2.5 text-right">QTY</th>
-                            <th class="pb-2.5 text-right">HARI</th>
-                            <th class="pb-2.5 text-right">TARIF / HARI</th>
-                            <th class="pb-2.5 text-right">JUMLAH</th>
+                        <tr>
+                            <th class="invoice-label" style="width: 2rem">No</th>
+                            <th class="invoice-label">Barang / biaya</th>
+                            <th class="invoice-label text-end">Qty</th>
+                            <th class="invoice-label text-end">Hari</th>
+                            <th class="invoice-label text-end">Tarif / hari</th>
+                            <th class="invoice-label text-end">Jumlah</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach ($bill->lines as $line)
-                            <tr @class(['border-b border-slate-200 align-top', 'text-slate-400 line-through' => $bill->isCancelled])>
-                                <td class="py-3.5 tabular-nums text-slate-400">{{ ++$rowNumber }}</td>
-                                <td class="py-3.5">
-                                    <p @class(['font-medium', 'text-slate-900' => ! $bill->isCancelled])>Sewa {{ $line['category'] }}</p>
-                                    <p class="mt-1 flex flex-wrap gap-1">
+                            <tr @class(['invoice-cancelled' => $bill->isCancelled])>
+                                <td class="text-muted tabular-nums">{{ ++$rowNumber }}</td>
+                                <td>
+                                    <p class="fw-medium text-dark mb-1">Sewa {{ $line['category'] }}</p>
+                                    <div class="d-flex flex-wrap gap-1">
                                         @foreach ($line['units'] as $code)
-                                            <span class="rounded bg-slate-100 px-1.5 py-0.5 text-[11px] font-medium tabular-nums text-slate-600">{{ $code }}</span>
+                                            <x-unit-chip :code="$code" />
                                         @endforeach
-                                    </p>
+                                    </div>
                                 </td>
-                                <td class="py-3.5 text-right tabular-nums">{{ $line['quantity'] }}</td>
-                                <td class="py-3.5 text-right tabular-nums">{{ $bill->days }}</td>
-                                <td class="py-3.5 text-right tabular-nums">{{ RentalBill::rupiah($line['rate']) }}</td>
-                                <td @class(['py-3.5 text-right font-medium tabular-nums', 'text-slate-900' => ! $bill->isCancelled])>{{ RentalBill::rupiah($line['amount']) }}</td>
+                                <td class="text-end tabular-nums">{{ Number::format($line['quantity']) }}</td>
+                                <td class="text-end tabular-nums">{{ Number::format($bill->days) }}</td>
+                                <td class="text-end tabular-nums">{{ RentalBill::rupiah($line['rate']) }}</td>
+                                <td class="text-end fw-medium text-dark tabular-nums">{{ RentalBill::rupiah($line['amount']) }}</td>
                             </tr>
                         @endforeach
                         @if ($bill->isCancelled)
-                            <tr class="border-b border-slate-200 align-top">
-                                <td class="py-3.5 tabular-nums text-slate-400">{{ ++$rowNumber }}</td>
-                                <td class="py-3.5 font-medium text-slate-900" colspan="4">Biaya pembatalan</td>
-                                <td class="py-3.5 text-right font-medium tabular-nums text-slate-900">{{ RentalBill::rupiah($bill->cancellationFee) }}</td>
+                            <tr>
+                                <td class="text-muted tabular-nums">{{ ++$rowNumber }}</td>
+                                <td class="fw-medium text-dark" colspan="4">Biaya pembatalan</td>
+                                <td class="text-end fw-medium text-dark tabular-nums">{{ RentalBill::rupiah($bill->cancellationFee) }}</td>
                             </tr>
                         @endif
                         @foreach ($rental->charges as $charge)
-                            <tr class="border-b border-slate-200 align-top">
-                                <td class="py-3.5 tabular-nums text-slate-400">{{ ++$rowNumber }}</td>
-                                <td class="py-3.5" colspan="4">
-                                    <p class="font-medium text-slate-900">{{ $charge->type->label() }}</p>
+                            <tr>
+                                <td class="text-muted tabular-nums">{{ ++$rowNumber }}</td>
+                                <td colspan="4">
+                                    <p class="fw-medium text-dark mb-0">{{ $charge->type->label() }}</p>
                                     @if ($charge->description)
-                                        <p class="text-xs text-slate-500">{{ $charge->description }}</p>
+                                        <p class="text-muted fs-12 mb-0">{{ $charge->description }}</p>
                                     @endif
                                 </td>
-                                <td class="py-3.5 text-right font-medium tabular-nums text-slate-900">{{ RentalBill::rupiah($charge->amount) }}</td>
+                                <td class="text-end fw-medium text-dark tabular-nums">{{ RentalBill::rupiah($charge->amount) }}</td>
                             </tr>
                         @endforeach
                     </tbody>
                 </table>
 
                 {{-- Payment info & totals --}}
-                <section class="mt-6 grid grid-cols-[1fr_280px] items-start gap-10">
-                    <div class="text-sm">
-                        <h2 class="text-[11px] font-semibold tracking-wider text-slate-400">PEMBAYARAN</h2>
-                        <div class="mt-2 rounded-lg border border-slate-200 p-3.5">
-                            <p class="font-semibold text-slate-900">{{ $bank['name'] }} · {{ $bank['account'] }}</p>
-                            <p class="text-slate-600">a.n. {{ $bank['holder'] }}</p>
+                <section class="d-flex align-items-start gap-5 mt-4">
+                    <div class="flex-grow-1 fs-13">
+                        <h2 class="invoice-label mb-2">Pembayaran</h2>
+                        <div class="border rounded p-3">
+                            <p class="fw-semibold text-dark mb-0">{{ $bank['name'] }} · {{ $bank['account'] }}</p>
+                            <p class="mb-0">a.n. {{ $bank['holder'] }}</p>
                         </div>
-                        <p class="mt-2 text-xs text-slate-500">Cantumkan nomor invoice pada keterangan transfer.</p>
+                        <p class="text-muted fs-12 mt-2 mb-0">Cantumkan nomor invoice pada keterangan transfer.</p>
 
                         @if ($rental->payments->isNotEmpty())
-                            <h2 class="mt-5 text-[11px] font-semibold tracking-wider text-slate-400">RIWAYAT PEMBAYARAN</h2>
-                            <table class="mt-1.5 w-full text-xs">
+                            <h2 class="invoice-label mt-4 mb-1">Riwayat pembayaran</h2>
+                            <table class="table table-sm fs-12 mb-0">
                                 @foreach ($rental->payments as $payment)
-                                    <tr class="border-b border-slate-100 last:border-0">
-                                        <td class="py-1.5 tabular-nums text-slate-500">{{ $payment->paid_at->translatedFormat('j M Y') }}</td>
-                                        <td class="py-1.5 text-slate-600">{{ $payment->isRefund() ? 'Pengembalian dana' : $payment->method->label() }}</td>
-                                        <td class="py-1.5 text-right font-medium tabular-nums text-slate-900">{{ RentalBill::rupiah($payment->amount) }}</td>
+                                    <tr>
+                                        <td class="text-muted tabular-nums ps-0">{{ $payment->paid_at->translatedFormat('j M Y') }}</td>
+                                        <td>{{ $payment->isRefund() ? 'Pengembalian dana' : $payment->method->label() }}</td>
+                                        <td class="text-end fw-medium text-dark tabular-nums pe-0">{{ RentalBill::rupiah($payment->amount) }}</td>
                                     </tr>
                                 @endforeach
                             </table>
                         @endif
                     </div>
 
-                    <dl class="flex flex-col gap-2 text-sm">
-                        @unless ($bill->isCancelled)
-                            <div class="flex justify-between"><dt class="text-slate-500">Subtotal sewa</dt><dd class="tabular-nums">{{ RentalBill::rupiah($bill->subtotal) }}</dd></div>
-                            @if ($bill->discount > 0)
-                                <div class="flex justify-between">
-                                    <dt class="text-slate-500">Diskon{{ $rental->discount_type === \App\Enums\DiscountType::Percent ? ' '.$rental->discount_value.'%' : '' }}</dt>
-                                    <dd class="tabular-nums text-red-600">−{{ RentalBill::rupiah($bill->discount) }}</dd>
-                                </div>
+                    <div class="invoice-totals fs-13">
+                        <table class="table table-borderless table-sm mb-2">
+                            @unless ($bill->isCancelled)
+                                <tr>
+                                    <td class="text-muted ps-0">Subtotal sewa</td>
+                                    <td class="text-end tabular-nums pe-0">{{ RentalBill::rupiah($bill->subtotal) }}</td>
+                                </tr>
+                                @if ($bill->discount > 0)
+                                    <tr>
+                                        <td class="text-muted ps-0">Diskon{{ $rental->discount_type === \App\Enums\DiscountType::Percent ? ' '.$rental->discount_value.'%' : '' }}</td>
+                                        <td class="text-end tabular-nums text-danger pe-0">−{{ RentalBill::rupiah($bill->discount) }}</td>
+                                    </tr>
+                                @endif
+                            @endunless
+                            @if ($bill->charges > 0)
+                                <tr>
+                                    <td class="text-muted ps-0">Biaya tambahan</td>
+                                    <td class="text-end tabular-nums pe-0">{{ RentalBill::rupiah($bill->charges) }}</td>
+                                </tr>
                             @endif
-                        @endunless
-                        @if ($bill->charges > 0)
-                            <div class="flex justify-between"><dt class="text-slate-500">Biaya tambahan</dt><dd class="tabular-nums">{{ RentalBill::rupiah($bill->charges) }}</dd></div>
-                        @endif
-                        <div class="flex justify-between border-t border-slate-200 pt-2"><dt class="font-medium text-slate-900">Total</dt><dd class="font-semibold tabular-nums text-slate-900">{{ RentalBill::rupiah($bill->total) }}</dd></div>
-                        <div class="flex justify-between"><dt class="text-slate-500">Sudah dibayar</dt><dd class="tabular-nums">−{{ RentalBill::rupiah($bill->paid) }}</dd></div>
+                            <tr class="border-top">
+                                <td class="fw-medium text-dark ps-0 pt-2">Total</td>
+                                <td class="text-end fw-semibold text-dark tabular-nums pe-0 pt-2">{{ RentalBill::rupiah($bill->total) }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted ps-0">Sudah dibayar</td>
+                                <td class="text-end tabular-nums pe-0">−{{ RentalBill::rupiah($bill->paid) }}</td>
+                            </tr>
+                        </table>
                         <div @class([
-                            'mt-1 flex items-center justify-between rounded-lg px-3.5 py-3 text-white',
-                            'bg-primary' => $bill->balance() > 0,
-                            'bg-emerald-600' => $bill->balance() === 0,
-                            'bg-violet-600' => $bill->balance() < 0,
+                            'invoice-balance d-flex align-items-center justify-content-between px-3 py-2',
+                            'bg-primary' => $balance > 0,
+                            'bg-success' => $balance === 0,
+                            'bg-info' => $balance < 0,
                         ])>
-                            <dt class="font-medium">{{ $bill->balance() < 0 ? 'Lebih bayar' : 'Sisa tagihan' }}</dt>
-                            <dd class="text-lg font-bold tabular-nums">{{ RentalBill::rupiah(abs($bill->balance())) }}</dd>
+                            <span class="fw-medium">{{ $balance < 0 ? 'Lebih bayar' : 'Sisa tagihan' }}</span>
+                            <span class="fs-17 fw-bold tabular-nums">{{ RentalBill::rupiah(abs($balance)) }}</span>
                         </div>
-                    </dl>
+                    </div>
                 </section>
 
                 {{-- Terms & signatures --}}
-                <section class="mt-auto grid grid-cols-[1fr_auto] items-end gap-10 pt-12 text-sm">
-                    <div>
-                        <h2 class="text-[11px] font-semibold tracking-wider text-slate-400">SYARAT & KETENTUAN</h2>
-                        <ol class="mt-2 list-decimal space-y-1 pl-4 text-xs leading-relaxed text-slate-500">
+                <section class="d-flex align-items-end gap-5 mt-auto pt-5 fs-13">
+                    <div class="flex-grow-1">
+                        <h2 class="invoice-label mb-2">Syarat &amp; ketentuan</h2>
+                        <ol class="text-muted fs-12 lh-base ps-3 mb-0">
                             @foreach (config('invoice.terms') as $term)
                                 <li>{{ $term }}</li>
                             @endforeach
                         </ol>
                     </div>
-                    <div class="flex gap-10 text-center text-xs text-slate-500">
-                        <div class="w-36">
-                            <p>Penyewa</p>
-                            <div class="mt-16 border-t border-slate-300 pt-1.5 font-medium text-slate-900">{{ $rental->customer->name }}</div>
+                    <div class="d-flex gap-5 text-center text-muted fs-12">
+                        <div class="invoice-signature">
+                            <p class="mb-0">Penyewa</p>
+                            <div class="invoice-signature-line fw-medium text-dark">{{ $rental->customer->name }}</div>
                         </div>
-                        <div class="w-36">
-                            <p>Hormat kami,</p>
-                            <div class="mt-16 border-t border-slate-300 pt-1.5 font-medium text-slate-900">{{ $business['name'] }}</div>
+                        <div class="invoice-signature">
+                            <p class="mb-0">Hormat kami,</p>
+                            <div class="invoice-signature-line fw-medium text-dark">{{ $business['name'] }}</div>
                         </div>
                     </div>
                 </section>
             </div>
 
-            <footer class="flex items-center justify-between border-t border-slate-200 px-[14mm] py-4 text-xs text-slate-400">
+            <footer class="d-flex align-items-center justify-content-between border-top text-muted fs-12 py-3" style="padding-left: 14mm; padding-right: 14mm">
                 <span>Terima kasih telah menyewa di {{ $business['name'] }}.</span>
                 <span class="tabular-nums">{{ $rental->invoice_number }}</span>
             </footer>

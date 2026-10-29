@@ -2,8 +2,7 @@
 
 {{--
     Remix Icon glyphs (https://remixicon.com) from the Velzon template's icon font. The names stay the
-    app's own, so views don't change when the icon set does. A Tailwind size-* class still works: it is
-    turned into the matching font size, since a font icon is sized by font-size rather than width.
+    app's own, so views don't change when the icon set does. Size it with font-size classes (fs-16, fs-22…).
 --}}
 @php
     $glyphs = [
@@ -22,6 +21,7 @@
         'download' => 'ri-download-2-line',
         'ellipsis' => 'ri-more-fill',
         'chevrons-up-down' => 'ri-arrow-up-down-line',
+        'clock' => 'ri-time-line',
         'file-text' => 'ri-file-text-line',
         'history' => 'ri-history-line',
         'layout-grid' => 'ri-dashboard-2-line',
@@ -32,6 +32,7 @@
         'moon' => 'ri-moon-line',
         'package' => 'ri-archive-line',
         'pencil' => 'ri-pencil-line',
+        'phone' => 'ri-phone-line',
         'plus' => 'ri-add-line',
         'printer' => 'ri-printer-line',
         'radio-tower' => 'ri-base-station-line',
@@ -48,22 +49,6 @@
     ];
 
     $glyph = $glyphs[$name] ?? throw new InvalidArgumentException("Unknown icon [{$name}].");
-
-    $classes = explode(' ', (string) $attributes->get('class', ''));
-    $fontSize = null;
-    foreach ($classes as $index => $class) {
-        if (preg_match('/^size-(\d+(?:\.\d+)?)$/', $class, $match)) {
-            $fontSize = ((float) $match[1] * 0.25).'rem';
-            unset($classes[$index]);
-        } elseif (preg_match('/^size-\[(\d+(?:\.\d+)?px)\]$/', $class, $match)) {
-            $fontSize = $match[1];
-            unset($classes[$index]);
-        }
-    }
 @endphp
 
-<i
-    {{ $attributes->except('class')->merge(['aria-hidden' => 'true']) }}
-    @class([$glyph, 'lh-1 flex-shrink-0', ...$classes])
-    @if ($fontSize) style="font-size: {{ $fontSize }}" @endif
-></i>
+<i {{ $attributes->merge(['aria-hidden' => 'true'])->class([$glyph, 'lh-1 flex-shrink-0']) }}></i>

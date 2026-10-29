@@ -36,7 +36,8 @@ class UpdateRental
      *     event_social?: string|null,
      *     discount?: array{type: string|null, value: int, note: string|null},
      * }  $data  Validated input. Pass customer_id for an existing customer, or name + phone for a new one.
-     *     Units added are booked at their category's current daily rate; units kept keep theirs.
+     *     Saving prices every unit still out or booked at its category's current daily rate, so a rate change
+     *     made since the booking applies to the whole rental; returned units keep the rate they were billed at.
      *     Leave out discount to keep the current one.
      *
      * @throws ValidationException
@@ -98,6 +99,12 @@ class UpdateRental
             $openItems
                 ->reject(fn (RentalItem $item): bool => in_array($item->unit_id, $unitIds, true))
                 ->each(fn (RentalItem $item) => $item->delete());
+
+            $currentRates = $units->mapWithKeys(fn (Unit $unit): array => [$unit->id => (int) $unit->category->daily_rate]);
+
+            $openItems
+                ->filter(fn (RentalItem $item): bool => $currentRates->has($item->unit_id) && $item->daily_rate !== $currentRates[$item->unit_id])
+                ->each(fn (RentalItem $item) => $item->update(['daily_rate' => $currentRates[$item->unit_id]]));
 
             $rental->items()->createMany(
                 $units

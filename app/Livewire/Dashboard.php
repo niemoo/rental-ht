@@ -2,7 +2,6 @@
 
 namespace App\Livewire;
 
-use App\Livewire\Concerns\ReturnsRentals;
 use App\Livewire\Concerns\SortsTable;
 use App\Models\Customer;
 use App\Models\Rental;
@@ -15,7 +14,7 @@ use Livewire\Component;
 #[Title('Dashboard')]
 class Dashboard extends Component
 {
-    use ReturnsRentals, SortsTable;
+    use SortsTable;
 
     #[Url(as: 'sort', except: 'due')]
     public string $sortBy = 'due';

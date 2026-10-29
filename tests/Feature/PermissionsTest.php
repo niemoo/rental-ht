@@ -3,7 +3,6 @@
 use App\Enums\Permission;
 use App\Enums\Role;
 use App\Livewire\Customers;
-use App\Livewire\Dashboard;
 use App\Livewire\Rentals;
 use App\Livewire\Units;
 use App\Models\Rental;
@@ -73,7 +72,8 @@ test('a user without a role sees no actions and cannot call them', function () {
         ->assertDontSee('Kembalikan')
         ->assertDontSee(route('units.index'));
 
-    Livewire::test(Dashboard::class)->call('returnRental', $rental->id)->assertForbidden();
+    $this->get(route('rentals.return', $rental))->assertForbidden();
+    Livewire::test(Rentals\ReturnUnits::class, ['rental' => $rental])->call('save')->assertForbidden();
     Livewire::test(Customers\Form::class)->set('name', 'A')->set('phone', '1')->call('save')->assertForbidden();
     Livewire::test(Rentals\Form::class)->call('save')->assertForbidden();
 

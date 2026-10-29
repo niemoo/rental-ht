@@ -77,16 +77,16 @@
                                 {{-- Velzon pins .topbar-user menus to top: 6px !important for Popper to shift; without Popper, drop it below the profile instead. --}}
                                 <div class="dropdown-menu dropdown-menu-end show" style="top: 100% !important; right: 0; left: auto" x-show="menuOpen" x-cloak role="menu">
                                     <h6 class="dropdown-header">Halo, {{ auth()->user()->name }}</h6>
-                                    <a href="{{ route('profile') }}" @class(['dropdown-item', 'active' => request()->routeIs('profile')]) role="menuitem">
-                                        <x-icon name="user" class="text-muted fs-16 align-middle me-1" />
-                                        <span class="align-middle">Profil saya</span>
+                                    <a href="{{ route('profile') }}" @class(['dropdown-item d-flex align-items-center', 'active' => request()->routeIs('profile')]) role="menuitem">
+                                        <x-icon name="user" class="text-muted fs-16 me-1" />
+                                        <span>Profil saya</span>
                                     </a>
                                     <div class="dropdown-divider"></div>
                                     <form method="POST" action="{{ route('logout') }}">
                                         @csrf
-                                        <button type="submit" class="dropdown-item" role="menuitem">
-                                            <x-icon name="log-out" class="text-muted fs-16 align-middle me-1" />
-                                            <span class="align-middle">Keluar</span>
+                                        <button type="submit" class="dropdown-item d-flex align-items-center" role="menuitem">
+                                            <x-icon name="log-out" class="text-muted fs-16 me-1" />
+                                            <span>Keluar</span>
                                         </button>
                                     </form>
                                 </div>

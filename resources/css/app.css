@@ -1,69 +1,8 @@
 /*
  * The look comes from the Velzon template (public/velzon, linked in partials/head before this file).
- * Tailwind stays for views that still use its utilities: no preflight (Bootstrap's reboot is the base),
- * utilities unlayered so they sit beside Velzon's CSS, and the app's colour tokens point at Velzon's
- * variables so both follow the same palette and data-bs-theme switch.
+ * This file only adds the app's fixes and additions on top of it, using Velzon's --vz-* variables so
+ * everything follows the data-bs-theme switch.
  */
-@import 'tailwindcss/theme.css' layer(theme);
-@import 'tailwindcss/utilities.css';
-
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../storage/framework/views/*.php';
-@source '../../app/**/*.php';
-
-/* Velzon/Bootstrap class names that Tailwind would otherwise turn into conflicting utilities. */
-@source not inline('{collapse,container,invisible,visible,w-xs,w-sm,w-md,w-lg,w-xl}');
-
-@custom-variant dark (&:where([data-bs-theme=dark], [data-bs-theme=dark] *));
-
-@theme inline {
-    --font-sans: 'Poppins', ui-sans-serif, system-ui, sans-serif;
-    --color-background: var(--background);
-    --color-foreground: var(--foreground);
-    --color-card: var(--card);
-    --color-card-foreground: var(--card-foreground);
-    --color-popover: var(--popover);
-    --color-popover-foreground: var(--popover-foreground);
-    --color-primary: var(--primary);
-    --color-primary-foreground: var(--primary-foreground);
-    --color-secondary: var(--secondary);
-    --color-secondary-foreground: var(--secondary-foreground);
-    --color-muted: var(--muted);
-    --color-muted-foreground: var(--muted-foreground);
-    --color-accent: var(--accent);
-    --color-accent-foreground: var(--accent-foreground);
-    --color-destructive: var(--destructive);
-    --color-border: var(--border);
-    --color-input: var(--input);
-    --color-ring: var(--ring);
-    --radius-sm: calc(var(--radius) * 0.6);
-    --radius-md: calc(var(--radius) * 0.8);
-    --radius-lg: var(--radius);
-    --radius-xl: calc(var(--radius) * 1.4);
-    --radius-2xl: calc(var(--radius) * 1.8);
-}
-
-:root {
-    --radius: 0.25rem;
-    --background: var(--vz-body-bg);
-    --foreground: var(--vz-body-color);
-    --card: var(--vz-secondary-bg);
-    --card-foreground: var(--vz-body-color);
-    --popover: var(--vz-secondary-bg);
-    --popover-foreground: var(--vz-body-color);
-    --primary: var(--vz-primary);
-    --primary-foreground: #ffffff;
-    --secondary: var(--vz-tertiary-bg);
-    --secondary-foreground: var(--vz-body-color);
-    --muted: var(--vz-tertiary-bg);
-    --muted-foreground: var(--vz-secondary-color);
-    --accent: var(--vz-primary-bg-subtle);
-    --accent-foreground: var(--vz-primary);
-    --destructive: var(--vz-danger);
-    --border: var(--vz-border-color);
-    --input: var(--vz-border-color);
-    --ring: var(--vz-primary);
-}
 
 /*
  * The copied Velzon build sets --vz-primary to near-black while --vz-primary-rgb is Velzon's indigo, so
@@ -164,6 +103,18 @@
     background-color: var(--vz-header-bg);
 }
 
+/* Rental form: the summary column follows the page on wide screens; unit buttons share a width. */
+@media (min-width: 1200px) {
+    .summary-sticky {
+        position: sticky;
+        top: calc(70px + 1.5rem);
+    }
+}
+
+.unit-picker .btn {
+    min-width: 4.5rem;
+}
+
 /* Room between the last card and the footer. */
 .page-content {
     padding-bottom: calc(60px + 2rem);
@@ -181,6 +132,30 @@
     color: var(--vz-body-color);
     background-color: var(--vz-light);
     border: 1px solid var(--vz-border-color);
+}
+
+/* Piutang report: one clickable aging row — label, bar, amount. */
+.aging-row {
+    display: grid;
+    grid-template-columns: 9rem minmax(0, 1fr) 10rem;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.aging-row .progress {
+    display: flex;
+}
+
+@media (max-width: 575.98px) {
+    .aging-row {
+        grid-template-columns: minmax(0, 1fr) auto;
+        row-gap: 0.375rem;
+    }
+
+    .aging-row .progress {
+        grid-column: 1 / -1;
+        grid-row: 2;
+    }
 }
 
 .row-overdue > td:first-child,

@@ -243,7 +243,8 @@ class Form extends Component
 
     /**
      * Rent for the units picked (plus any already returned) over the chosen dates, grouped by category.
-     * Units already on the rental keep the rate they were booked at; others use their category's rate.
+     * Units picked use their category's current rate, as saving reprices them (see UpdateRental); units already
+     * returned keep the rate they were billed at.
      *
      * @return array{lines: list<array{category: string, quantity: int, rate: int, amount: int}>, subtotal: int, discount: int, total: int}|null
      */
@@ -254,10 +255,10 @@ class Form extends Component
             return null;
         }
 
-        $bookedRates = $this->rental ? $this->rental->items()->pluck('daily_rate', 'unit_id')->all() : [];
+        $returnedRates = $this->rental ? $this->rental->items()->whereNotNull('returned_at')->pluck('daily_rate', 'unit_id')->all() : [];
 
         $lines = $this->selectedUnits->concat($this->returnedUnits)
-            ->map(fn (Unit $unit): array => ['category' => $unit->category->name, 'rate' => (int) ($bookedRates[$unit->id] ?? $unit->category->daily_rate)])
+            ->map(fn (Unit $unit): array => ['category' => $unit->category->name, 'rate' => (int) ($returnedRates[$unit->id] ?? $unit->category->daily_rate)])
             ->groupBy(fn (array $unit): string => $unit['category'].'|'.$unit['rate'])
             ->map(fn ($units): array => [
                 'category' => $units->first()['category'],

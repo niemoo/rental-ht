@@ -3,6 +3,7 @@
 use App\Enums\Permission;
 use App\Enums\UnitCondition;
 use App\Livewire\Rentals\Form;
+use App\Models\Category;
 use App\Models\Customer;
 use App\Models\Rental;
 use App\Models\Unit;
@@ -98,6 +99,30 @@ test('returned units stay on the rental and are not required to be ticked', func
 
     expect($rental->items()->pluck('unit_id')->all())->toBe([$returned->id])
         ->and($rental->fresh()->isCompleted())->toBeTrue();
+});
+
+test('saving an edit prices every unit not yet returned at today\'s rate, and returned units keep theirs', function () {
+    $ht = Category::factory()->create(['name' => 'HT', 'daily_rate' => 25000]);
+    [$returned, $kept, $added] = Unit::factory()->count(3)->for($ht)->sequence(['code' => 'A-003'], ['code' => 'A-002'], ['code' => 'A-001'])->create();
+    $rental = Rental::factory()->between(-1, 1)->withUnits([$returned, $kept])->create(); // 3 days, booked at 25.000
+    $rental->items()->where('unit_id', $returned->id)->update(['returned_at' => now()]);
+
+    $ht->update(['daily_rate' => 10000]);
+
+    $component = Livewire::test(Form::class, ['rental' => $rental])->set('unitIds', [$kept->id, $added->id]);
+
+    expect($component->instance()->estimate['lines'])->toBe([
+        ['category' => 'HT', 'quantity' => 2, 'rate' => 10000, 'amount' => 60000],
+        ['category' => 'HT', 'quantity' => 1, 'rate' => 25000, 'amount' => 75000],
+    ]);
+
+    $component->call('save')->assertHasNoErrors();
+
+    expect($rental->items()->pluck('daily_rate', 'unit_id')->all())->toEqual([
+        $returned->id => 25000,
+        $kept->id => 10000,
+        $added->id => 10000,
+    ])->and($rental->fresh()->total_amount)->toBe(135000);
 });
 
 test('a completed rental cannot be edited', function () {

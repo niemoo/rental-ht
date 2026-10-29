@@ -9,7 +9,7 @@
         <div class="col-xl-6 col-lg-8">
             <form
                 x-data="confirmAction(@js([
-                    'text' => $category ? 'Perubahan pada kategori '.$category->name.' akan disimpan. Tarif baru hanya berlaku untuk pemesanan berikutnya.' : 'Kategori baru akan ditambahkan.',
+                    'text' => $category ? 'Perubahan pada kategori '.$category->name.' akan disimpan. Tarif baru dipakai untuk pemesanan berikutnya dan penyewaan yang diubah setelah ini.' : 'Kategori baru akan ditambahkan.',
                     'confirmLabel' => $category ? 'Ya, simpan perubahan' : 'Ya, simpan kategori',
                 ]))"
                 x-on:submit.prevent="ask('save')"
@@ -24,7 +24,7 @@
                         <x-input id="category-name" wire:model="name" placeholder="cth. HT, Mic, TOA" autofocus />
                     </x-field>
 
-                    <x-field label="Tarif per hari" for="category-daily-rate" error="dailyRate" hint="Harga sewa satu unit per hari. Perubahan tarif hanya berlaku untuk pemesanan berikutnya.">
+                    <x-field label="Tarif per hari" for="category-daily-rate" error="dailyRate" hint="Harga sewa satu unit per hari. Tarif baru dipakai untuk pemesanan berikutnya dan saat penyewaan yang belum selesai diubah.">
                         <x-money-input id="category-daily-rate" wire:model="dailyRate" placeholder="25000" />
                     </x-field>
                 </div>

@@ -99,7 +99,8 @@ Alpine.data('choicesSelect', (options = {}) => ({
 
 /**
  * Velzon's SweetAlert2 dialogs, resolving true when the user confirms. Options: title, text or html (html is
- * server-rendered, already-escaped Blade output), confirmLabel, danger (a delete: red confirm, neutral Batal)
+ * server-rendered, already-escaped Blade output), confirmLabel, cancelLabel (default Batal, for when "Batal"
+ * would read as the action itself), danger (a delete: red confirm, neutral cancel button)
  * and blocked (the action isn't allowed: an info dialog with only "Tutup", always resolving false).
  * The dialog closes as soon as a button is pressed, like Velzon's demo; the caller's own loading state shows
  * progress, since waiting inside the dialog would leave it stuck if a request never came back.
@@ -123,11 +124,12 @@ const confirmDialog = (options = {}) => {
     return window.Swal.fire({
         title: options.title ?? 'Apakah Anda yakin?',
         ...body,
+        target: options.target ?? 'body',
         icon: 'warning',
         showCancelButton: true,
         showCloseButton: true,
         confirmButtonText: options.confirmLabel ?? 'Ya, simpan',
-        cancelButtonText: 'Batal',
+        cancelButtonText: options.cancelLabel ?? 'Batal',
         buttonsStyling: false,
         // Batal on the left, the confirm button on the right.
         reverseButtons: true,
@@ -147,7 +149,10 @@ Alpine.magic('confirm', () => confirmDialog);
  */
 Alpine.data('confirmAction', (options = {}) => ({
     ask(method, ...params) {
-        confirmDialog(options).then((confirmed) => {
+        // Inside a dialog, open the confirmation in it too, so the dialog's focus trap doesn't hold focus away from it.
+        const target = this.$el.closest('.modal-content');
+
+        confirmDialog(target ? { ...options, target } : options).then((confirmed) => {
             if (confirmed) {
                 this.$wire[method](...params);
             }

@@ -6,8 +6,8 @@
         <div class="d-flex align-items-center gap-2">
             <p class="flex-grow-1 text-uppercase fw-medium text-muted text-truncate mb-0">{{ $label }}</p>
             @if ($trend !== null)
-                <h5 @class(['fs-14 mb-0 flex-shrink-0', 'text-success' => $trend >= 0, 'text-danger' => $trend < 0])>
-                    <x-icon :name="$trend >= 0 ? 'arrow-up' : 'arrow-down'" class="fs-13 align-middle" />
+                <h5 @class(['fs-14 mb-0 flex-shrink-0 d-flex align-items-center', 'text-success' => $trend >= 0, 'text-danger' => $trend < 0])>
+                    <x-icon :name="$trend >= 0 ? 'arrow-up' : 'arrow-down'" class="fs-13 me-1" />
                     {{ Number::format(abs($trend)) }}%
                 </h5>
             @endif

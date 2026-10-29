@@ -44,6 +44,7 @@ Route::middleware('auth')->group(function () {
     Route::livewire('/rentals/{rental}', Rentals\Show::class)->name('rentals.show')->can(Permission::ViewRentals);
     Route::livewire('/rentals/{rental}/edit', Rentals\Form::class)->name('rentals.edit')->can(Permission::EditRentals);
     Route::livewire('/rentals/{rental}/cancel', Rentals\Cancel::class)->name('rentals.cancel')->can(Permission::CancelRentals);
+    Route::livewire('/rentals/{rental}/return', Rentals\ReturnUnits::class)->name('rentals.return')->can(Permission::ReturnRentals);
     Route::livewire('/rentals/{rental}/payments/new', Payments\Form::class)->name('rentals.payments.create')->can(Permission::RecordPayments);
     Route::livewire('/rentals/{rental}/charges/new', Charges\Form::class)->name('rentals.charges.create')->can(Permission::ManageCharges);
     Route::get('/rentals/{rental}/invoice', RentalInvoiceController::class)->name('rentals.invoice')->can(Permission::ViewRentals);

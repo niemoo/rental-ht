@@ -155,12 +155,14 @@ test('returning a rental records the condition each unit came back in', function
     $rental = Rental::factory()->withUnits([$fine, $broken, $missing])->create();
     $items = $rental->items()->get()->keyBy('unit_id');
 
+    Livewire::test(Rentals\ReturnUnits::class, ['rental' => $rental])
+        ->set("conditions.{$items[$broken->id]->id}", 'damaged')
+        ->set("conditions.{$items[$missing->id]->id}", 'lost')
+        ->assertSee('2 unit tidak bisa disewakan lagi')
+        ->call('save')
+        ->assertHasNoErrors();
+
     Livewire::test(Rentals\Show::class, ['rental' => $rental])
-        ->call('returnRental', $rental->id, [
-            $items[$fine->id]->id => 'good',
-            $items[$broken->id]->id => 'damaged',
-            $items[$missing->id]->id => 'lost',
-        ])
         ->assertSee('Rusak')
         ->assertSee('Dicatat hilang');
 
@@ -172,12 +174,14 @@ test('returning a rental records the condition each unit came back in', function
         ->and($rental->fresh()->isCompleted())->toBeTrue();
 });
 
-test('a unit left out of the return form keeps the condition it had', function () {
+test('each unit on the return page starts at the condition it has now', function () {
     $unit = Unit::factory()->create();
     $rental = Rental::factory()->withUnits($unit)->create();
     $unit->update(['condition' => UnitCondition::UnderRepair]);
 
-    Livewire::test(Dashboard::class)->call('returnRental', $rental->id);
+    Livewire::test(Rentals\ReturnUnits::class, ['rental' => $rental])
+        ->assertSet('conditions', [$rental->items()->sole()->id => 'under_repair'])
+        ->call('save');
 
     expect($unit->fresh()->condition)->toBe(UnitCondition::UnderRepair)
         ->and($rental->items()->sole()->return_condition)->toBe(UnitCondition::UnderRepair);
@@ -186,18 +190,34 @@ test('a unit left out of the return form keeps the condition it had', function (
 test('an unknown return condition is rejected and nothing is returned', function () {
     $rental = Rental::factory()->withUnits()->create();
 
-    Livewire::test(Dashboard::class)
-        ->call('returnRental', $rental->id, [$rental->items()->sole()->id => 'meh'])
-        ->assertHasErrors(['conditions']);
+    $itemId = $rental->items()->sole()->id;
+
+    Livewire::test(Rentals\ReturnUnits::class, ['rental' => $rental])
+        ->set("conditions.{$itemId}", 'meh')
+        ->call('save')
+        ->assertHasErrors(["conditions.{$itemId}"]);
 
     expect($rental->fresh()->isCompleted())->toBeFalse();
 });
 
-test('the return dialog lists each unit with a condition picker', function () {
+test('the return page lists each unit with a condition picker', function () {
     $rental = Rental::factory()->withUnits(Unit::factory()->create(['code' => 'A-07']))->create();
 
-    $this->get(route('rentals.show', $rental))
+    $this->get(route('rentals.return', $rental))
         ->assertOk()
         ->assertSee('Kondisi A-07')
         ->assertSee('Dalam perbaikan');
+});
+
+test('every unit on the return page can be given the same condition at once', function () {
+    $rental = Rental::factory()->withUnits(Unit::factory()->count(3)->create())->create();
+
+    $component = Livewire::test(Rentals\ReturnUnits::class, ['rental' => $rental])
+        ->call('setAllConditions', 'damaged')
+        ->assertSee('3 unit tidak bisa disewakan lagi');
+
+    expect(array_values(array_unique($component->get('conditions'))))->toBe(['damaged']);
+
+    $component->call('setAllConditions', 'meh');
+    expect(array_values(array_unique($component->get('conditions'))))->toBe(['damaged']);
 });
