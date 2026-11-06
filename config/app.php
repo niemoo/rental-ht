@@ -123,4 +123,20 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Superadmin Account
+    |--------------------------------------------------------------------------
+    |
+    | The account created by SuperadminSeeder. Outside production the password
+    | falls back to "password"; in production it must be set in the .env.
+    |
+    */
+
+    'superadmin' => [
+        'name' => env('SUPERADMIN_NAME', 'Superadmin'),
+        'email' => env('SUPERADMIN_EMAIL', 'superadmin@gmail.com'),
+        'password' => env('SUPERADMIN_PASSWORD'),
+    ],
+
 ];

@@ -17,7 +17,7 @@ enum Role: string
         return match ($this) {
             self::Superadmin => 'Superadmin',
             self::Owner => 'Pemilik',
-            self::Staff => 'Staf',
+            self::Staff => 'Staff',
         };
     }
 

@@ -13,7 +13,7 @@ beforeEach(function () {
 });
 
 test('only users with permission can open the roles page', function () {
-    $this->get(route('roles.index'))->assertOk()->assertSee('Superadmin')->assertSee('Pemilik')->assertSee('Staf');
+    $this->get(route('roles.index'))->assertOk()->assertSee('Superadmin')->assertSee('Pemilik')->assertSee('Staff');
     $this->actingAs(User::factory()->create())->get(route('roles.index'))->assertForbidden();
 });
 
